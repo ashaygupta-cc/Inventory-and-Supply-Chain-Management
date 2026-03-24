@@ -79,7 +79,7 @@ The app uses **Next.js 16 App Router**, **Prisma** with **MongoDB**, **JWT** aut
 - **Orders:** Create/edit orders with line items, tax/shipping/discount rules, status and payment status; client vs admin views.
 - **Invoices:** One per order; status (draft, sent, paid, overdue, cancelled); PDF, send email, Stripe payment link.
 - **Warehouses:** CRUD, types, status; used for organization and future stock allocation.
-- **Payments:** Stripe Checkout for orders/invoices; webhook for fulfillment.
+- **Payments:** Stripe Checkout for orders/invoices; webhook for fulfillment. (Stripe is optional, mock flow enabled when disconnected)
 - **Shipping:** Shippo labels, rates, tracking; webhook for status.
 
 ### Role-Based Experience
