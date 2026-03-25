@@ -32,10 +32,33 @@ export async function POST(request: NextRequest) {
     }
 
     if (!isShippoConfigured()) {
-      return NextResponse.json(
-        { error: "Shipping service is not configured" },
-        { status: 503 },
-      );
+      logger.info("Shippo not configured. Mocking shipping rates...");
+      const response: GetRatesResponse = {
+        rates: [
+          {
+            objectId: "mock_rate_1",
+            carrier: "USPS",
+            carrierAccount: "mock",
+            servicelevel: { name: "Priority Mail", token: "usps_priority", terms: "" },
+            amount: "8.50",
+            currency: "USD",
+            estimatedDays: 2,
+            durationTerms: "2-3 days"
+          },
+          {
+            objectId: "mock_rate_2",
+            carrier: "FedEx",
+            carrierAccount: "mock",
+            servicelevel: { name: "Standard Overnight", token: "fedex_standard_overnight", terms: "" },
+            amount: "29.99",
+            currency: "USD",
+            estimatedDays: 1,
+            durationTerms: "Overnight"
+          }
+        ],
+        shipmentId: "mock_shipment_" + Date.now(),
+      };
+      return NextResponse.json(response);
     }
 
     const body: GetRatesInput = await request.json();
