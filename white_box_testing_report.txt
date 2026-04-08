@@ -1,0 +1,77 @@
+# White-Box Testing Plan: Inventory and Supply Chain Management
+
+This document outlines the white-box testing strategy for the "Inventory and Supply Chain Management" project. It provides a detailed breakdown of the internal logic, data structures, and security mechanisms that require rigorous testing.
+
+---
+
+## 1. Overview of White-Box Testing
+White-box testing (also known as clear-box, glass-box, or structural testing) examines the internal workings of the application. Unlike black-box testing, which focuses on inputs and outputs, white-box testing validates:
+- Internal control flows and data paths.
+- Execution branch coverage (if/else, switch cases).
+- Exception handling and edge cases.
+- Data integrity within the database layer.
+
+---
+
+## 2. Key Testing Areas & Logic Breakdown
+
+### A. Data Layer (Prisma & MongoDB)
+Testing Focus: Ensuring the schema constraints and relationships match the business requirements.
+- **Cascading Deletes:** Verify that deleting an `Order` correctly removes associated `OrderItem` and `Invoice` records (as defined in `schema.prisma`).
+- **Unique Constraints:** Test that duplicate `SKUs` (Product), `OrderNumbers` (Order), and `UserEmails` (User) are blocked at the database level.
+- **Index Performance:** Check that queries using indexed fields (e.g., `userId`, `status`, `createdAt`) are optimized.
+- **BigInt Handling:** Since some quantities use `BigInt`, ensure the application correctly serializes/deserializes these values between the DB and the Frontend.
+
+### B. Business Logic: Demand Forecasting (`lib/forecasting/demand-forecast.ts`)
+This is the most complex logic in the project. Testing must include mathematical validation.
+- **Moving Average Calculation:** Test `calculateMovingAverage` with varying window sizes and handle cases where data points are fewer than the window size.
+- **Linear Regression (Trend Analysis):** Provide mock sales data (increasing, decreasing, stable) to verify that `analyzeTrend` returns the correct status and percentage.
+- **Anomaly Detection:** Verify that `detectAnomalies` correctly identifies spikes or drops based on standard deviation (Z-score logic).
+- **Stockout Prediction:** Validate the `daysUntilStockout` formula: `availableStock / predictedDailySales`. Test edge cases like zero sales (to avoid division by zero).
+- **Reorder Recommendations:** Test the threshold logic for "urgent", "soon", "normal", and "overstocked" based on `REORDER_LEAD_DAYS`.
+
+### C. Security & Authentication (`middleware/authMiddleware.ts` & `lib/auth-server.ts`)
+Testing Focus: Ensuring unauthorized access is blocked and sessions are handled securely.
+- **Session Validation:** Test that requests without a valid session token return a `401 Unauthorized` status.
+- **Role-Based Access Control (RBAC):** (If implemented) Verify that a user with a `retailer` role cannot access `admin` routes or `supplier` portals.
+- **Request Context:** Ensure the `authMiddleware` correctly attaches the `user` object to the request for downstream consumption.
+- **Production Logging:** Verify that the `Logger` suppresses sensitive info in production but captures exceptions in Sentry (`lib/logger.ts`).
+
+### D. Input Validation (`lib/validations/`)
+Testing Focus: Ensuring the application "fails fast" on malformed data.
+- **Zod Schema Coverage:** Test every schema (Product, Order, Supplier) with:
+    - Missing required fields.
+    - Fields exceeding max length (e.g., long descriptions).
+    - Invalid data types (e.g., string instead of number for price).
+- **Sanitization:** Verify that string inputs are trimmed and potential HTML tags are handled to prevent XSS.
+
+---
+
+## 3. Detailed Test Cases (Sample Execution)
+
+| Test ID | Module | Scenario | Expected Behavior |
+|---------|--------|----------|-------------------|
+| WBT-001 | Forecasting | Sales data has 0 volume | `daysUntilStockout` should return `null` or a safe default; no crash. |
+| WBT-002 | Forecasting | Only 3 days of sales data | `analyzeTrend` should return `stable` with 0% change (minimum 7 days required). |
+| WBT-003 | Auth | Expired JWT/Session | Middleware must redirect to login or return 401. |
+| WBT-004 | Product | Update reserved quantity | Verify `availableStock` (quantity - reserved) updates correctly in the state. |
+| WBT-005 | Prisma | Order Item snapshot | Verify that changing a Product's price DOES NOT change the price in existing `OrderItem` records. |
+
+---
+
+## 4. Error Handling & Edge Cases
+White-box testing should specifically target "Catch" blocks:
+- **Database Connection Failure:** How does the app behave if MongoDB is unreachable? (Check `prisma/client` initialization).
+- **Third-Party API Failures:** Test the behavior when Stripe or Shippo APIs return errors. Ensure the app logs the error via `lib/logger.ts` and notifies the user gracefully.
+- **Malformed JSON:** Send invalid JSON to API endpoints and ensure the parser handles it without crashing the process.
+
+---
+
+## 5. Recommended Tools for Implementation
+To execute these tests, the following setup is recommended:
+- **Vitest or Jest:** For unit testing utility functions and forecasting logic.
+- **Supertest:** For integration testing API routes and middleware.
+- **Prisma Mocking:** Use `@prisma/client/testing` to mock database calls without needing a live MongoDB instance for every test.
+
+---
+*Generated for: Inventory and Supply Chain Management Project Infrastructure*

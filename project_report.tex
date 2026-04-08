@@ -1,0 +1,498 @@
+\documentclass[12pt,a4paper]{report}
+% ─── Packages ────────────────────────────────────────────────────────────────
+\usepackage[a4paper, margin=2.5cm]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{listings}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric,arrows.meta,positioning,fit,backgrounds,calc}
+\usepackage{tcolorbox}
+\tcbuselibrary{skins,breakable}
+\usepackage{setspace}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{mdframed}
+
+% ─── Colour Palette ──────────────────────────────────────────────────────────
+\definecolor{primary}{HTML}{1E3A5F}
+\definecolor{secondary}{HTML}{2E86AB}
+\definecolor{accent}{HTML}{E84855}
+\definecolor{success}{HTML}{3BB273}
+\definecolor{warning}{HTML}{F4A261}
+\definecolor{lightgray}{HTML}{F5F5F5}
+\definecolor{darkgray}{HTML}{333333}
+\definecolor{codebg}{HTML}{1E1E2E}
+\definecolor{codetext}{HTML}{CDD6F4}
+\definecolor{p1red}{HTML}{C0392B}
+\definecolor{p2orange}{HTML}{E67E22}
+\definecolor{p3blue}{HTML}{2980B9}
+\definecolor{p4green}{HTML}{27AE60}
+\definecolor{titlebg}{HTML}{0D1B2A}
+
+% ─── Hyperref ────────────────────────────────────────────────────────────────
+\hypersetup{
+  colorlinks=true, linkcolor=primary, urlcolor=secondary, citecolor=accent,
+  pdftitle={Stockly -- Comprehensive Project Report},
+  pdfauthor={Stockly Engineering Team},
+  pdfsubject={Software Engineering Project Report},
+}
+
+% ─── Header / Footer ─────────────────────────────────────────────────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\color{primary}\textbf{Stockly} --- Inventory \& Supply Chain Management}
+\fancyhead[R]{\small\color{darkgray}v2.0.1 $\cdot$ April 2026}
+\fancyfoot[C]{\small\color{darkgray}\thepage}
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% ─── Section Styling ─────────────────────────────────────────────────────────
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries\color{primary}}{\chaptertitlename\ \thechapter}{20pt}{\Huge}
+\titleformat{\section}{\normalfont\Large\bfseries\color{primary}}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries\color{secondary}}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries\color{darkgray}}{\thesubsubsection}{1em}{}
+
+% ─── Code Style ──────────────────────────────────────────────────────────────
+\lstdefinestyle{codestyle}{
+  backgroundcolor=\color{codebg}, basicstyle=\ttfamily\footnotesize\color{codetext},
+  keywordstyle=\color{accent}\bfseries, commentstyle=\color{success}\itshape,
+  stringstyle=\color{warning}, breaklines=true, frame=single,
+  rulecolor=\color{secondary}, numbers=left, numberstyle=\tiny\color{darkgray},
+  tabsize=2, showstringspaces=false,
+}
+\lstset{style=codestyle}
+
+% ─── Custom Boxes ────────────────────────────────────────────────────────────
+\tcbset{
+  reqbox/.style={enhanced,breakable,colback=blue!4,colframe=primary,
+    fonttitle=\bfseries\color{white},coltitle=white,
+    attach boxed title to top left,
+    boxed title style={colback=primary,rounded corners},rounded corners},
+  testbox/.style={enhanced,breakable,colback=lightgray,colframe=secondary,
+    fonttitle=\bfseries\color{white},coltitle=white,
+    attach boxed title to top left,
+    boxed title style={colback=secondary,rounded corners},
+    rounded corners,drop shadow},
+  criticalbox/.style={enhanced,breakable,colback=red!5,colframe=p1red,
+    fonttitle=\bfseries\color{white},coltitle=white,
+    attach boxed title to top left,
+    boxed title style={colback=p1red,rounded corners},rounded corners},
+  infobox/.style={enhanced,breakable,colback=blue!5,colframe=primary,
+    fonttitle=\bfseries\color{white},coltitle=white,
+    attach boxed title to top left,
+    boxed title style={colback=primary,rounded corners},rounded corners},
+  warningbox/.style={enhanced,breakable,colback=orange!8,colframe=warning,
+    fonttitle=\bfseries\color{white},coltitle=white,
+    attach boxed title to top left,
+    boxed title style={colback=warning,rounded corners},rounded corners},
+  successbox/.style={enhanced,breakable,colback=green!5,colframe=success,
+    fonttitle=\bfseries\color{white},coltitle=white,
+    attach boxed title to top left,
+    boxed title style={colback=success,rounded corners},rounded corners},
+}
+
+% ─── TikZ Styles ─────────────────────────────────────────────────────────────
+\tikzset{
+  startstop/.style={rectangle,rounded corners=8pt,minimum width=3cm,
+    minimum height=0.9cm,text centered,draw=primary,very thick,
+    fill=primary!15,font=\small\bfseries},
+  process/.style={rectangle,minimum width=3.5cm,minimum height=0.9cm,
+    text centered,draw=secondary,thick,fill=secondary!10,font=\small},
+  decision/.style={diamond,aspect=2.2,minimum width=3.5cm,minimum height=0.9cm,
+    text centered,draw=accent,thick,fill=accent!10,font=\small},
+  terminal/.style={rectangle,rounded corners=15pt,minimum width=2.5cm,
+    minimum height=0.9cm,text centered,draw=accent,very thick,
+    fill=accent!20,font=\small\bfseries},
+  arrow/.style={-{Stealth[length=6pt]},thick,color=darkgray},
+  yes/.style={font=\small\color{success}\bfseries},
+  no/.style={font=\small\color{accent}\bfseries},
+}
+
+% ─── Helpers ─────────────────────────────────────────────────────────────────
+\newcommand{\pone}{\textbf{\color{p1red}P1}}
+\newcommand{\ptwo}{\textbf{\color{p2orange}P2}}
+\newcommand{\pthree}{\textbf{\color{p3blue}P3}}
+\newcommand{\pfour}{\textbf{\color{p4green}P4}}
+\newcommand{\req}[1]{\texttt{\textbf{\color{primary}#1}}}
+\newcommand{\api}[1]{\texttt{\color{secondary}#1}}
+\newcommand{\model}[1]{\texttt{\color{accent}#1}}
+
+\setlength{\parskip}{7pt}
+\setlength{\parindent}{0pt}
+\onehalfspacing
+
+% ═════════════════════════════════════════════════════════════════════════════
+\begin{document}
+% ═════════════════════════════════════════════════════════════════════════════
+
+% ─── TITLE PAGE ──────────────────────────────────────────────────────────────
+\begin{titlepage}
+  \pagecolor{titlebg}\color{white}\centering
+  \vspace*{1.2cm}
+  {\fontsize{11}{14}\selectfont\texttt{\color{secondary}SOFTWARE ENGINEERING PROJECT REPORT}}\\[0.4cm]
+  \rule{14cm}{0.5pt}\\[0.9cm]
+  {\fontsize{44}{54}\selectfont\bfseries\color{white}Stockly}\\[0.3cm]
+  {\fontsize{17}{22}\selectfont\color{secondary}Inventory \& Supply Chain Management System}\\[0.7cm]
+  \rule{14cm}{0.5pt}\\[0.9cm]
+  {\large\itshape\color{white!85}
+    A Full-Stack Role-Based Warehouse, Order, Invoice, and Analytics Platform\\[0.2cm]
+    Built with Next.js~16, TypeScript~5, Prisma~ORM~6.4, and MongoDB
+  }\\[2.2cm]
+  \begin{tabular}{rl}
+    \textbf{\color{secondary}Version:}         & \color{white}2.0.1 \\[4pt]
+    \textbf{\color{secondary}Date:}            & \color{white}April 8, 2026 \\[4pt]
+    \textbf{\color{secondary}Framework:}       & \color{white}Next.js 16 (App Router), React 19 \\[4pt]
+    \textbf{\color{secondary}Language:}        & \color{white}TypeScript 5 (strict mode) \\[4pt]
+    \textbf{\color{secondary}Database:}        & \color{white}MongoDB via Prisma ORM 6.4 \\[4pt]
+    \textbf{\color{secondary}Live Demo:}       & \color{secondary}\url{https://stockly-inventory.vercel.app} \\[4pt]
+    \textbf{\color{secondary}License:}         & \color{white}MIT Open Source \\[4pt]
+    \textbf{\color{secondary}Report Type:}     & \color{white}SRS + Architecture + White-Box Testing \\[4pt]
+    \textbf{\color{secondary}Test Cases:}      & \color{white}107 across 10 modules \\[4pt]
+    \textbf{\color{secondary}Coverage Target:} & \color{white}85\% Statements / 90\% Branch \\
+  \end{tabular}
+  \vfill
+  \rule{14cm}{0.5pt}\\[0.4cm]
+  {\small\color{white!55}
+    This document covers the complete Software Requirements Specification, system design,\\
+    implementation details, white-box testing strategy, deployment, and future roadmap.
+  }
+\end{titlepage}
+\pagecolor{white}\color{black}
+
+% ─── ABSTRACT ────────────────────────────────────────────────────────────────
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+
+\begin{tcolorbox}[infobox,title={Executive Summary}]
+Stockly is a production-grade, role-based inventory and supply chain management platform that consolidates product management, order processing, invoice generation, warehouse tracking, supplier coordination, customer support, and business analytics into a single cohesive web application. The system serves three distinct user roles --- administrators, suppliers, and clients --- each with tailored dashboards and access controls enforced at both the API and UI layers.
+\end{tcolorbox}
+
+This report presents the complete software engineering documentation for Stockly v2.0.1. It covers the Software Requirements Specification (SRS) with functional and non-functional requirements, system architecture and data model design, implementation details of critical algorithms and integrations, a comprehensive white-box testing strategy with 107 documented test cases across 10 modules, deployment procedures for both local and cloud environments, and a future development roadmap.
+
+The platform is built on a modern full-stack architecture: \textbf{Next.js 16} with the App Router paradigm for server-side rendering and API routes, \textbf{TypeScript 5} in strict mode for end-to-end type safety, \textbf{Prisma ORM 6.4} with \textbf{MongoDB} as the persistence layer, and \textbf{JWT-based authentication} with \textbf{bcryptjs} for secure session management. Optional integrations include Stripe (payments), Shippo (shipping), Brevo (transactional email), ImageKit (media), Upstash Redis (caching and rate limiting), Sentry (error monitoring), and OpenRouter (AI insights).
+
+The core business logic encompasses product lifecycle management with SKU tracking and QR code generation, a multi-state order management system with atomic stock reservation semantics, invoice generation with financial integrity guarantees (including negative-total prevention via \texttt{Math.max(0, ...)}), demand forecasting using statistical moving averages and z-score anomaly detection, and a comprehensive RBAC system. White-box testing targets 85\% statement coverage and 90\% branch coverage across all critical modules, with special emphasis on security-critical paths (JWT verification, password hashing), financial logic (invoice totals, stock reservation), and edge cases (null coalescing, boundary values).
+
+\textbf{Key outcomes:} The system reduces manual inventory tracking overhead, provides real-time stock visibility, automates order-to-invoice workflows, and delivers actionable business intelligence through integrated analytics and AI-assisted forecasting.
+
+\newpage
+
+% ─── TABLE OF CONTENTS ───────────────────────────────────────────────────────
+\tableofcontents
+\newpage
+
+% ═════════════════════════════════════════════════════════════════════════════
+\chapter{Introduction}
+% ═════════════════════════════════════════════════════════════════════════════
+
+\section{Project Overview}
+
+Stockly is a production-grade, full-stack inventory and supply chain management system developed to address the operational challenges faced by small-to-medium enterprises (SMEs) engaged in product distribution, warehousing, and retail. The platform consolidates product management, order processing, invoice generation, supplier coordination, warehouse tracking, customer support, and business analytics into a single, cohesive web application accessible from any modern browser.
+
+The system is publicly accessible at \url{https://stockly-inventory.vercel.app} and is open-sourced under the MIT license. It is built with a technology stack chosen for developer productivity, runtime performance, and long-term maintainability.
+
+\begin{tcolorbox}[infobox,title={Three-Role Architecture}]
+Unlike traditional inventory tools that serve a single user type, Stockly provides \textbf{three fully distinct role-based experiences} within a single application:
+\begin{itemize}[leftmargin=1.5em]
+  \item \textbf{Admin (Store Owner):} Complete system control --- products, orders, invoices, warehouses, users, analytics, and portal oversight of both clients and suppliers.
+  \item \textbf{Supplier:} Scoped view of their own products, associated orders, revenue metrics, low-stock alerts, and support tickets.
+  \item \textbf{Client:} A consumer-facing portal for browsing the product catalog, placing orders, paying invoices via Stripe, and managing support requests.
+\end{itemize}
+\end{tcolorbox}
+
+The application follows the \textbf{Next.js 16 App Router} paradigm, where both the frontend (React Server Components and Client Components) and the backend (API Route Handlers) coexist within the same codebase. This architecture eliminates the need for a separate backend server, simplifies deployment, and enables efficient server-side rendering (SSR) and static generation (SSG) where appropriate.
+
+\section{Purpose}
+
+The primary purpose of Stockly is to eliminate the inefficiencies of manual or spreadsheet-based inventory management by providing a unified digital platform with the following capabilities:
+
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Real-time stock visibility:} Automatic computation of available stock using the formula $\text{availableStock} = \text{quantity} - \text{reservedQuantity}$, with status labels (available, stock low, out of stock) updated dynamically.
+  \item \textbf{Automated order-to-invoice workflows:} Orders automatically trigger invoice creation, status tracking, and payment collection, reducing administrative overhead and human error.
+  \item \textbf{Financial integrity:} Invoice calculations use \texttt{Math.max(0, subtotal + tax + shipping - discount)} to prevent negative totals, and nullish coalescing (\texttt{??}) ensures explicit zero values are respected over fallback values.
+  \item \textbf{Demand forecasting:} Statistical analysis of historical sales data (moving averages, standard deviation, linear regression) predicts future stock requirements and generates reorder recommendations.
+  \item \textbf{Multi-role access control:} JWT-based authentication with role-based query filtering ensures data isolation between clients, suppliers, and administrators.
+  \item \textbf{Operational transparency:} Comprehensive audit logs, activity history, and import history provide a full trail of all system changes.
+  \item \textbf{Extensible integrations:} The system is designed so the core application runs with only three environment variables, with all integrations (Stripe, Shippo, Brevo, etc.) being optional and gracefully degraded when not configured.
+\end{enumerate}
+
+\section{Scope}
+
+The scope of this project encompasses the following functional domains:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lX}
+  \toprule
+  \textbf{Domain} & \textbf{Scope Description} \\
+  \midrule
+  Product Management    & Full CRUD with SKU, categories, suppliers, stock levels, status, QR codes, CSV/Excel import/export, image upload via ImageKit \\
+  Order Management      & Multi-item orders with tax/shipping/discount, 6-state status machine, stock reservation/release logic \\
+  Invoice Management    & Auto-generated invoices linked 1:1 to orders, PDF export, email delivery, Stripe payment links, overdue tracking \\
+  Warehouse Management  & CRUD for warehouses, stock allocation per warehouse, stock transfer between warehouses \\
+  User Management       & Admin-controlled user CRUD, role assignment (admin/supplier/client/user/retailer), activity tracking \\
+  Supplier Portal       & Supplier-scoped dashboard with product/order/revenue views, low-stock alerts \\
+  Client Portal         & Consumer catalog with browse/filter, order placement, invoice payment, support tickets \\
+  Analytics             & Revenue charts, order trends, category breakdowns, demand forecasting, AI insights via OpenRouter \\
+  Support System        & Ticket creation, reply threads, priority/status management, role-scoped visibility \\
+  Product Reviews       & Customer reviews with admin moderation (approve/reject), eligibility verification by order \\
+  Notifications         & In-app notification system, optional email via Brevo with QStash queue \\
+  API Infrastructure    & RESTful API with JWT auth, Zod validation, rate limiting, Redis caching, OpenAPI spec \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Issues and Challenges}
+
+\begin{tcolorbox}[warningbox,title={Known Issues and Technical Challenges}]
+\begin{enumerate}[leftmargin=1.5em]
+  \item \textbf{Race Condition in Order Number Generation:} \texttt{generateOrderNumber()} uses a non-atomic count-based sequence. Under high concurrency, duplicate sequence numbers are theoretically possible. Mitigation: use a distributed atomic counter (e.g., Redis \texttt{INCR}) in production.
+  \item \textbf{Invoice Number Collision Risk:} \texttt{generateInvoiceNumber()} uses a random 4-digit suffix with a while-loop uniqueness check. Collision probability is 1/9000 per attempt, but the loop is unbounded under extreme load.
+  \item \textbf{JWT Secret Default Fallback:} If \texttt{JWT\_SECRET} is not set, the system defaults to \texttt{"your\_jwt\_secret"} --- a critical security vulnerability in production.
+  \item \textbf{Non-Atomic Stock Reservation:} Stock reservation during order creation involves multiple sequential Prisma updates. A server crash between order creation and stock reservation could leave stock in an inconsistent state. MongoDB transactions should be used for full atomicity.
+  \item \textbf{Forecasting Data Dependency:} The demand forecasting engine requires at least 7 days of historical sales data for trend analysis. Products with fewer data points receive a default ``stable'' classification.
+  \item \textbf{Optional Integration Degradation:} When Stripe, Shippo, Brevo, or Redis are not configured, the system falls back to mock/disabled behavior, which may not be immediately obvious to end users without proper UI indicators.
+\end{enumerate}
+\end{tcolorbox}
+
+\section{Technology Stack Summary}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+  \toprule
+  \textbf{Layer} & \textbf{Technology} & \textbf{Purpose} \\
+  \midrule
+  Framework    & Next.js 16 (App Router) & SSR, SSG, API routes, file-based routing \\
+  Language     & TypeScript 5 (strict)   & End-to-end type safety \\
+  Database     & MongoDB + Prisma ORM 6.4 & Document storage, schema validation, query builder \\
+  Auth         & JWT + bcryptjs           & Stateless session management, password hashing \\
+  State (server) & TanStack Query         & Server state, caching, background refetch \\
+  State (client) & Zustand                & Lightweight client-side state \\
+  UI           & Tailwind CSS + shadcn/ui & Utility-first styling, accessible component primitives \\
+  Forms        & React Hook Form + Zod    & Form management and schema validation \\
+  Payments     & Stripe                   & Checkout sessions, payment intents, webhooks \\
+  Shipping     & Shippo                   & Label generation, rate calculation, tracking \\
+  Email        & Brevo + QStash           & Transactional email, background job queue \\
+  Images       & ImageKit                 & CDN-backed image upload and transformation \\
+  Cache        & Upstash Redis            & API response caching, rate limiting \\
+  Monitoring   & Sentry                   & Error tracking and performance monitoring \\
+  AI           & OpenRouter               & AI-powered business insights \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+% ═════════════════════════════════════════════════════════════════════════════
+\chapter{Requirement Analysis}
+% ═════════════════════════════════════════════════════════════════════════════
+
+\section{Software Requirements Specification (SRS)}
+
+This chapter presents the formal Software Requirements Specification for Stockly. Requirements are classified as Functional (FR) or Non-Functional (NFR) and prioritized using the MoSCoW method (Must Have, Should Have, Could Have, Won't Have).
+
+\section{Stakeholders and User Roles}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{llX}
+  \toprule
+  \textbf{Stakeholder} & \textbf{Role} & \textbf{Primary Concerns} \\
+  \midrule
+  Store Owner   & Admin    & Full system control, analytics, user management, financial oversight \\
+  Product Supplier & Supplier & Own product visibility, order tracking, revenue reporting \\
+  Customer      & Client   & Product browsing, order placement, invoice payment, support \\
+  System Admin  & Admin    & User management, system configuration, audit logs \\
+  Developer     & Internal & API access, integration management, monitoring \\
+  \bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Functional Requirements}
+
+\subsection{Authentication and User Management}
+
+\begin{tcolorbox}[reqbox,title={FR-AUTH: Authentication Requirements}]
+\begin{itemize}[leftmargin=1.5em]
+  \item \req{FR-AUTH-01} The system SHALL allow users to register with email, name, and password. Passwords must be hashed using bcrypt with a minimum of 10 salt rounds before storage.
+  \item \req{FR-AUTH-02} The system SHALL authenticate users via email/password and issue a signed JWT token stored as an \texttt{httpOnly} cookie named \texttt{session\_id} with a 1-hour expiry.
+  \item \req{FR-AUTH-03} The system SHALL support Google OAuth 2.0 as an alternative authentication method.
+  \item \req{FR-AUTH-04} The system SHALL validate JWT tokens on every protected API request. Expired, malformed, or tampered tokens SHALL result in a 401 Unauthorized response.
+  \item \req{FR-AUTH-05} The system SHALL support session logout by clearing the \texttt{session\_id} cookie.
+  \item \req{FR-AUTH-06} The system SHALL enforce role-based access control. Users with insufficient roles SHALL receive a 403 Forbidden response.
+  \item \req{FR-AUTH-07} Admin users SHALL be able to create, update, deactivate, and delete user accounts and assign roles.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Product Management}
+
+\begin{tcolorbox}[reqbox,title={FR-PROD: Product Requirements}]
+\begin{itemize}[leftmargin=1.5em]
+  \item \req{FR-PROD-01} The system SHALL support full CRUD operations for products with fields: name, SKU (unique), price, quantity, reservedQuantity, status, categoryId, supplierId, description, imageUrl, qrCodeUrl, and expirationDate.
+  \item \req{FR-PROD-02} Product status SHALL be automatically computed: \texttt{available} (quantity $>$ threshold), \texttt{stock\_low} (quantity $\leq$ threshold), \texttt{out\_of\_stock} (quantity $= 0$).
+  \item \req{FR-PROD-03} The system SHALL generate QR codes for products and store them via ImageKit.
+  \item \req{FR-PROD-04} The system SHALL support bulk product import from CSV and Excel files, with per-row error reporting and import history tracking.
+  \item \req{FR-PROD-05} The system SHALL support product image upload via ImageKit with automatic cleanup of old images on update.
+  \item \req{FR-PROD-06} SKU values SHALL be globally unique across all products.
+  \item \req{FR-PROD-07} The system SHALL support product filtering by category, supplier, status, and price range, with pagination.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Order Management}
+
+\begin{tcolorbox}[reqbox,title={FR-ORD: Order Requirements}]
+\begin{itemize}[leftmargin=1.5em]
+  \item \req{FR-ORD-01} The system SHALL support creation of orders with multiple line items, each capturing productId, quantity, unit price (snapshot), and subtotal.
+  \item \req{FR-ORD-02} On order creation, the system SHALL verify available stock ($\text{quantity} - \text{reservedQuantity} \geq \text{requestedQuantity}$) for each item and reject the order if any item has insufficient stock.
+  \item \req{FR-ORD-03} On successful order creation, the system SHALL increment \texttt{reservedQuantity} for each ordered product.
+  \item \req{FR-ORD-04} The order status state machine SHALL support the following transitions: \texttt{pending} $\to$ \texttt{confirmed} $\to$ \texttt{processing} $\to$ \texttt{shipped} $\to$ \texttt{delivered}, with cancellation possible from any non-delivered state.
+  \item \req{FR-ORD-05} On order confirmation/payment, the system SHALL decrement both \texttt{quantity} and \texttt{reservedQuantity} for each ordered product.
+  \item \req{FR-ORD-06} On order cancellation from a pending state, the system SHALL decrement \texttt{reservedQuantity} (releasing the reservation). On cancellation from confirmed/processing/shipped, the system SHALL increment \texttt{quantity} (restoring stock).
+  \item \req{FR-ORD-07} Order totals SHALL be computed as: $\text{total} = \text{subtotal} + \text{tax} + \text{shipping} - \text{discount}$.
+  \item \req{FR-ORD-08} The system SHALL generate unique order numbers in the format \texttt{ORD-YYYY-MMDD-HHMMSS-NNNN}.
+  \item \req{FR-ORD-09} Clients SHALL only see their own orders. Suppliers SHALL only see orders containing their products. Admins SHALL see all orders.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Invoice Management}
+
+\begin{tcolorbox}[reqbox,title={FR-INV: Invoice Requirements}]
+\begin{itemize}[leftmargin=1.5em]
+  \item \req{FR-INV-01} Each order SHALL have at most one invoice (enforced by a unique constraint on \texttt{orderId}).
+  \item \req{FR-INV-02} Invoice numbers SHALL be unique and generated in the format \texttt{INV-YYYYMMDD-HHMMSS-XXXX} with collision detection.
+  \item \req{FR-INV-03} Invoice totals SHALL use \texttt{Math.max(0, subtotal + tax + shipping - discount)} to prevent negative totals.
+  \item \req{FR-INV-04} Tax, shipping, and discount values SHALL use nullish coalescing (\texttt{??}) to respect explicit zero values from the request over order defaults.
+  \item \req{FR-INV-05} New invoices SHALL always start with \texttt{status = "draft"} and \texttt{amountPaid = 0}.
+  \item \req{FR-INV-06} The system SHALL support invoice PDF generation and email delivery to clients.
+  \item \req{FR-INV-07} The system SHALL generate Stripe payment links for invoices and process payments via Stripe Checkout.
+  \item \req{FR-INV-08} The system SHALL send automated overdue invoice reminders via a scheduled endpoint protected by \texttt{INTERNAL\_API\_KEY}.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Warehouse and Stock Allocation}
+
+\begin{tcolorbox}[reqbox,title={FR-WH: Warehouse Requirements}]
+\begin{itemize}[leftmargin=1.5em]
+  \item \req{FR-WH-01} The system SHALL support CRUD operations for warehouses with fields: name, address, type, and status.
+  \item \req{FR-WH-02} The system SHALL support stock allocation records linking products to warehouses with per-warehouse quantity and reservedQuantity.
+  \item \req{FR-WH-03} The system SHALL support stock transfer operations between warehouses with status tracking (pending, completed, cancelled).
+  \item \req{FR-WH-04} A product-warehouse combination SHALL be unique (enforced by a composite unique index on \texttt{[productId, warehouseId]}).
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Analytics and Forecasting}
+
+\begin{tcolorbox}[reqbox,title={FR-ANALYTICS: Analytics Requirements}]
+\begin{itemize}[leftmargin=1.5em]
+  \item \req{FR-ANA-01} The admin dashboard SHALL display: total products, orders, invoices, revenue, low-stock count, and recent activity.
+  \item \req{FR-ANA-02} The business insights page SHALL display revenue trends, order volume charts, category breakdowns, and supplier performance metrics.
+  \item \req{FR-ANA-03} The demand forecasting engine SHALL analyze the last 30 days of sales data and forecast the next 14 days using weighted moving averages.
+  \item \req{FR-ANA-04} The forecasting engine SHALL detect sales anomalies using z-score analysis with a threshold of 2.0 standard deviations.
+  \item \req{FR-ANA-05} The system SHALL generate reorder recommendations: \texttt{urgent} ($\leq 7$ days until stockout), \texttt{soon} ($\leq 14$ days), \texttt{overstocked} ($> 90$ days), \texttt{normal} (otherwise).
+  \item \req{FR-ANA-06} The system SHALL compute a confidence score (0--100) for each forecast based on data volume and coefficient of variation.
+  \item \req{FR-ANA-07} The system SHALL optionally provide AI-generated business insights via OpenRouter when \texttt{OPENROUTER\_API\_KEY} is configured.
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Support Tickets and Product Reviews}
+
+\begin{tcolorbox}[reqbox,title={FR-SUPPORT: Support and Review Requirements}]
+\begin{itemize}[leftmargin=1.5em]
+  \item \req{FR-SUP-01} Any authenticated user SHALL be able to create support tickets with subject, description, priority (low/medium/high/urgent), and optional links to products, orders, or suppliers.
+  \item \req{FR-SUP-02} Support tickets SHALL support threaded replies from any authenticated user.
+  \item \req{FR-SUP-03} Ticket status SHALL follow: \texttt{open} $\to$ \texttt{in\_progress} $\to$ \texttt{resolved} $\to$ \texttt{closed}.
+  \item \req{FR-REV-01} Clients SHALL be able to submit product reviews (rating 1--5, comment) only for products they have ordered and received.
+  \item \req{FR-REV-02} Product reviews SHALL require admin approval before being publicly visible.
+  \item \req{FR-REV-03} The system SHALL enforce one review per order-product combination.
+\end{itemize}
+\end{tcolorbox}
+
+\section{Non-Functional Requirements}
+
+\begin{center}
+\begin{longtable}{lp{4cm}p{8cm}}
+  \toprule
+  \textbf{ID} & \textbf{Category} & \textbf{Requirement} \\
+  \midrule
+  \endhead
+  NFR-01 & Performance      & API responses SHALL complete within 500ms for 95\% of requests under normal load. Dashboard aggregation queries SHALL complete within 2 seconds. \\
+  NFR-02 & Security         & All passwords SHALL be hashed with bcrypt (min 10 rounds). JWT tokens SHALL expire after 1 hour. All API routes SHALL validate authentication before processing. \\
+  NFR-03 & Security         & The \texttt{session\_id} cookie SHALL be \texttt{httpOnly}, \texttt{Secure} (in production), and \texttt{SameSite=Strict} to prevent XSS and CSRF attacks. \\
+  NFR-04 & Rate Limiting    & API endpoints SHALL enforce rate limiting via Upstash Redis. Exceeded limits SHALL return HTTP 429 with a \texttt{Retry-After} header. \\
+  NFR-05 & Availability     & The system SHALL target 99.9\% uptime when deployed on Vercel with MongoDB Atlas. \\
+  NFR-06 & Scalability      & The caching layer (Upstash Redis) SHALL reduce database load by caching frequently accessed resources (products, orders, dashboard stats) with appropriate TTLs. \\
+  NFR-07 & Maintainability  & All API routes SHALL use Zod schemas for input validation. Validation errors SHALL return structured error messages with field-level details. \\
+  NFR-08 & Auditability     & All create, update, and delete operations on core entities SHALL be recorded in the \texttt{AuditLog} collection with userId, action, entityType, entityId, and timestamp. \\
+  NFR-09 & Accessibility    & The UI SHALL follow WCAG 2.1 AA guidelines using accessible shadcn/ui components built on Radix UI primitives. \\
+  NFR-10 & Portability      & The system SHALL run on any Node.js 18+ environment with only three required environment variables (\texttt{DATABASE\_URL}, \texttt{JWT\_SECRET}, \texttt{NEXT\_PUBLIC\_API\_URL}). \\
+  NFR-11 & Observability    & When Sentry is configured, all unhandled exceptions SHALL be captured with full stack traces and user context. \\
+  NFR-12 & Data Integrity   & MongoDB unique indexes SHALL enforce uniqueness on \texttt{Product.sku}, \texttt{Invoice.invoiceNumber}, \texttt{Order.orderNumber}, \texttt{User.email}, and \texttt{StockAllocation[productId, warehouseId]}. \\
+  \bottomrule
+\end{longtable}
+\end{center}
+
+\section{Use Cases}
+
+\subsection{Use Case: Place an Order (Client)}
+
+\begin{tcolorbox}[reqbox,title={UC-01: Place Order}]
+\textbf{Actor:} Client \\
+\textbf{Precondition:} Client is authenticated. Products are in stock. \\
+\textbf{Main Flow:}
+\begin{enumerate}[leftmargin=1.5em]
+  \item Client browses the product catalog and selects items.
+  \item Client adds items to the order with desired quantities.
+  \item System validates stock availability for each item.
+  \item System creates the order, reserves stock, and generates an order number.
+  \item System creates a linked invoice in \texttt{draft} status.
+  \item Client receives order confirmation with invoice details.
+\end{enumerate}
+\textbf{Alternate Flow (Insufficient Stock):} System returns an error message specifying the product and available quantity. Order is not created. No stock is reserved. \\
+\textbf{Postcondition:} Order exists in \texttt{pending} status. \texttt{reservedQuantity} incremented for each ordered product.
+\end{tcolorbox}
+
+\subsection{Use Case: Process Payment (Client)}
+
+\begin{tcolorbox}[reqbox,title={UC-02: Pay Invoice via Stripe}]
+\textbf{Actor:} Client \\
+\textbf{Precondition:} Invoice exists in \texttt{sent} or \texttt{draft} status. Stripe is configured. \\
+\textbf{Main Flow:}
+\begin{enumerate}[leftmargin=1.5em]
+  \item Client navigates to invoice detail page.
+  \item Client clicks ``Pay Now'' button.
+  \item System creates a Stripe Checkout session with the invoice amount.
+  \item Client is redirected to Stripe's hosted payment page.
+  \item Client completes payment.
+  \item Stripe sends a \texttt{checkout.session.completed} webhook to \texttt{/api/payments/webhook}.
+  \item System updates invoice status to \texttt{paid}, sets \texttt{paidAt}, and updates order \texttt{paymentStatus} to \texttt{paid}.
+\end{enumerate}
+\textbf{Postcondition:} Invoice status is \texttt{paid}. Order payment status is \texttt{paid}.
+\end{tcolorbox}
+
+\subsection{Use Case: Manage Inventory (Admin)}
+
+\begin{tcolorbox}[reqbox,title={UC-03: Admin Inventory Management}]
+\textbf{Actor:} Admin \\
+\textbf{Main Flow:}
+\begin{enumerate}[leftmargin=1.5em]
+  \item Admin navigates to the Products section.
+  \item Admin can create, edit, or delete products.
+  \item Admin can import products in bulk via CSV/Excel upload.
+  \item System validates each row, imports valid rows, and reports errors for invalid rows.
+  \item Import history is recorded with success/failure counts.
+  \item Admin can view low-stock products and trigger reorder workflows.
+\end{enumerate}
+\end{tcolorbox}

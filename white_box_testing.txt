@@ -1,0 +1,2097 @@
+================================================================================
+         WHITE BOX TESTING DOCUMENT
+         Project: Stockly - Inventory & Supply Chain Management System
+         Version: 2.0.1  |  Stack: Next.js, TypeScript, Prisma, MongoDB
+         Date: April 1, 2026
+================================================================================
+
+TABLE OF CONTENTS
+-----------------
+1.  Introduction to White Box Testing
+2.  Project Architecture Overview
+3.  Module 1: Authentication & Session Management
+4.  Module 2: Order Management & Stock State Machine
+5.  Module 3: Invoice Generation & Financial Logic
+6.  Module 4: Demand Forecasting Engine
+7.  Module 5: Email Notification System
+8.  Module 6: Rate Limiting & Caching
+9.  Module 7: Input Validation (Zod Schemas)
+10. Module 8: Role-Based Access Control (RBAC)
+11. Module 9: Data Integrity & Database Layer
+12. Module 10: Stripe Payment & Webhook Handling
+13. Complete Test Case Matrix
+14. Code Coverage Requirements
+15. Tools & Setup Instructions
+
+================================================================================
+SECTION 1: INTRODUCTION TO WHITE BOX TESTING
+================================================================================
+
+White box testing (also called structural testing, glass-box testing, or
+clear-box testing) is a software testing technique that examines the INTERNAL
+logic, code paths, branches, loops, and data flows of an application — not
+just its external behavior.
+
+Unlike black-box testing (which only tests inputs vs. outputs), white box
+testing requires the tester to have full knowledge of the source code.
+
+KEY GOALS OF WHITE BOX TESTING:
+- Achieve 100% statement coverage (every line of code is executed at least once)
+- Achieve 100% branch coverage (every if/else branch is tested)
+- Achieve 100% path coverage (every unique execution path is tested)
+- Validate all exception/catch blocks are reachable and handled correctly
+- Verify all loops execute correctly for 0, 1, and N iterations
+- Confirm data transformations produce mathematically correct results
+- Ensure security boundaries cannot be bypassed through internal logic
+
+TYPES OF WHITE BOX TESTING USED IN THIS DOCUMENT:
+1. Unit Testing       - Testing individual functions in isolation
+2. Integration Testing - Testing how modules interact with each other
+3. Control Flow Testing - Testing all branches and decision points
+4. Data Flow Testing  - Tracking how data is created, used, and destroyed
+5. Mutation Testing   - Verifying tests catch intentional code bugs
+6. Boundary Value Analysis - Testing edge values at limits
+
+
+================================================================================
+SECTION 2: PROJECT ARCHITECTURE OVERVIEW
+================================================================================
+
+Understanding the architecture is essential before writing white box tests.
+Below is the internal structure that tests must cover.
+
+TECH STACK:
+  - Framework:    Next.js 16 (App Router)
+  - Language:     TypeScript (strict mode)
+  - Database:     MongoDB via Prisma ORM 6.4
+  - Auth:         JWT (jsonwebtoken) + bcryptjs
+  - Cache:        Redis / Upstash
+  - Payments:     Stripe
+  - Shipping:     Shippo
+  - Email:        Brevo (Sendinblue) + QStash queue
+  - Validation:   Zod schemas
+  - Monitoring:   Sentry
+
+USER ROLES (5 total):
+  - admin      : Full system access
+  - user       : Standard product/order management
+  - supplier   : View products they supply, view related orders
+  - client     : View their own orders and invoices
+  - retailer   : Limited access (similar to client)
+
+CORE DATA MODELS (from prisma/schema.prisma):
+  - User           : Authentication, roles, preferences
+  - Product        : Inventory items with quantity + reservedQuantity
+  - Order          : Purchase orders with status state machine
+  - OrderItem      : Line items (snapshot of product price at order time)
+  - Invoice        : Financial documents linked 1:1 to orders
+  - Category       : Product classification
+  - Supplier       : Product suppliers
+  - Warehouse      : Storage locations
+  - StockAllocation: Product quantity per warehouse
+  - StockTransfer  : Movement of stock between warehouses
+  - SupportTicket  : Customer support requests
+  - ProductReview  : Customer product reviews
+  - Notification   : In-app notifications
+  - AuditLog       : Full audit trail of all changes
+
+KEY INTERNAL PATHS TO TEST:
+  /utils/auth.ts              -> JWT generation, verification, session resolution
+  /lib/validations/           -> All Zod schemas
+  /lib/forecasting/           -> Demand forecasting math
+  /lib/email/notifications.ts -> Email trigger logic
+  /lib/api/rate-limit.ts      -> Rate limiting middleware
+  /lib/cache.ts               -> Redis caching layer
+  /prisma/order.ts            -> Order CRUD + stock reservation
+  /prisma/invoice.ts          -> Invoice generation + number uniqueness
+  /app/api/auth/login/route.ts -> Login endpoint
+  /app/api/orders/route.ts    -> Orders API
+  /app/api/products/route.ts  -> Products API
+  /app/api/invoices/route.ts  -> Invoices API
+
+
+================================================================================
+SECTION 3: MODULE 1 - AUTHENTICATION & SESSION MANAGEMENT
+================================================================================
+
+SOURCE FILES:
+  - utils/auth.ts
+  - app/api/auth/login/route.ts
+  - app/api/auth/register/route.ts (implied)
+  - app/api/auth/session/route.ts (implied)
+
+--------------------------------------------------------------------------------
+3.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+FUNCTION: generateToken(userId: string): string
+  Internal path:
+    1. Calls jwt.sign({ userId }, JWT_SECRET, { expiresIn: "1h" })
+    2. Returns signed token string
+  Critical internal detail: JWT_SECRET defaults to "your_jwt_secret" if
+  env variable is not set. This is a SECURITY RISK in production.
+
+FUNCTION: verifyToken(token: string): { userId: string } | null
+  Internal branches:
+    Branch A: token is falsy, "null", or "undefined" -> return null
+    Branch B: isServer is false (client-side) -> return null
+    Branch C: jwt is undefined or jwt.verify missing -> return null
+    Branch D: jwt.verify throws (expired/invalid) -> catch -> return null
+    Branch E: jwt.verify succeeds -> return decoded payload
+
+FUNCTION: getSessionFromRequest(request)
+  Internal path:
+    1. Extract cookie "session_id" from request
+    2. If no cookie -> return null
+    3. Call verifyToken(token)
+    4. If verifyToken returns null -> return null
+    5. Query prisma.user.findUnique({ where: { id: decoded.userId } })
+    6. Return user (or null if not found in DB)
+
+FUNCTION: hashPassword(password: string): Promise<string>
+  Internal path:
+    1. bcrypt.genSalt(10) -> generates salt with 10 rounds
+    2. bcrypt.hash(password, salt) -> returns hashed string
+
+FUNCTION: comparePassword(password, hashedPassword): Promise<boolean>
+  Internal path:
+    1. bcrypt.compare(password, hashedPassword) -> returns boolean
+
+LOGIN ROUTE: POST /api/auth/login
+  Internal decision tree:
+    1. Parse request body -> if invalid object -> 400
+    2. loginSchema.parse(body) -> if Zod fails -> throws ZodError -> 400
+    3. prisma.user.findUnique({ where: { email } }) -> if null -> 401
+    4. if !user.password -> 500 (corrupted data)
+    5. bcrypt.compare(password, user.password) -> if false -> 401
+    6. if !user.id -> 500 (corrupted data)
+    7. generateToken(user.id) -> if null -> 500
+    8. Set cookie "session_id" with token -> 200
+
+--------------------------------------------------------------------------------
+3.2 TEST CASES - AUTHENTICATION
+--------------------------------------------------------------------------------
+
+TEST ID: AUTH-001
+  Function: verifyToken
+  Scenario: Token is an empty string
+  Input: token = ""
+  Expected Internal Path: Branch A (falsy check) -> return null
+  Expected Output: null
+  Coverage: Statement + Branch A
+
+TEST ID: AUTH-002
+  Function: verifyToken
+  Scenario: Token is the string "null"
+  Input: token = "null"
+  Expected Internal Path: Branch A (string "null" check) -> return null
+  Expected Output: null
+  Coverage: Branch A edge case
+
+TEST ID: AUTH-003
+  Function: verifyToken
+  Scenario: Token is the string "undefined"
+  Input: token = "undefined"
+  Expected Internal Path: Branch A -> return null
+  Expected Output: null
+  Coverage: Branch A edge case
+
+TEST ID: AUTH-004
+  Function: verifyToken
+  Scenario: Valid JWT token on server side
+  Input: A token generated by generateToken("user123")
+  Expected Internal Path: Branch E -> return { userId: "user123" }
+  Expected Output: { userId: "user123" }
+  Coverage: Happy path
+
+TEST ID: AUTH-005
+  Function: verifyToken
+  Scenario: Expired JWT token
+  Input: A token with expiresIn: "1ms" (wait 10ms before verifying)
+  Expected Internal Path: Branch D -> jwt.verify throws TokenExpiredError -> return null
+  Expected Output: null
+  Coverage: Exception handling branch
+
+TEST ID: AUTH-006
+  Function: verifyToken
+  Scenario: Token signed with wrong secret
+  Input: jwt.sign({ userId: "x" }, "WRONG_SECRET")
+  Expected Internal Path: Branch D -> jwt.verify throws JsonWebTokenError -> return null
+  Expected Output: null
+  Coverage: Security branch
+
+TEST ID: AUTH-007
+  Function: verifyToken
+  Scenario: Malformed/random string token
+  Input: token = "not.a.jwt.token"
+  Expected Internal Path: Branch D -> catch -> return null
+  Expected Output: null
+  Coverage: Malformed input
+
+TEST ID: AUTH-008
+  Function: generateToken
+  Scenario: Valid userId generates a decodable token
+  Input: userId = "abc123"
+  Expected: jwt.decode(result).userId === "abc123"
+  Coverage: Token payload integrity
+
+TEST ID: AUTH-009
+  Function: hashPassword + comparePassword
+  Scenario: Hash then compare same password
+  Input: password = "SecurePass123!"
+  Step 1: hash = await hashPassword(password)
+  Step 2: result = await comparePassword(password, hash)
+  Expected: result === true
+  Coverage: Round-trip password verification
+
+TEST ID: AUTH-010
+  Function: comparePassword
+  Scenario: Wrong password against valid hash
+  Input: comparePassword("WrongPass", hashOf("CorrectPass"))
+  Expected: false
+  Coverage: Negative comparison branch
+
+TEST ID: AUTH-011
+  Route: POST /api/auth/login
+  Scenario: Missing email field in body
+  Input: { password: "test123" }
+  Expected Internal Path: loginSchema.parse throws ZodError -> 400
+  Expected Response: { error: "..." }, status 400
+  Coverage: Zod validation branch
+
+TEST ID: AUTH-012
+  Route: POST /api/auth/login
+  Scenario: User not found in database
+  Input: { email: "nonexistent@test.com", password: "pass" }
+  Mock: prisma.user.findUnique returns null
+  Expected Internal Path: user === null -> 401
+  Expected Response: { error: "Invalid email or password" }, status 401
+  Coverage: User not found branch
+
+TEST ID: AUTH-013
+  Route: POST /api/auth/login
+  Scenario: User found but password field is null (corrupted data)
+  Input: valid email, any password
+  Mock: prisma.user.findUnique returns { id: "x", password: null }
+  Expected Internal Path: !user.password -> 500
+  Expected Response: { error: "User data corrupted: password missing" }, status 500
+  Coverage: Data corruption branch
+
+TEST ID: AUTH-014
+  Route: POST /api/auth/login
+  Scenario: Correct credentials
+  Input: { email: "admin@test.com", password: "correct" }
+  Mock: user found, bcrypt.compare returns true
+  Expected Internal Path: Full happy path -> 200 + cookie set
+  Expected Response: status 200, Set-Cookie header with session_id
+  Coverage: Full happy path
+
+TEST ID: AUTH-015
+  Function: getSessionFromRequest
+  Scenario: No session_id cookie present
+  Input: request with no cookies
+  Expected Internal Path: cookie undefined -> return null
+  Expected Output: null
+  Coverage: Missing cookie branch
+
+TEST ID: AUTH-016
+  Function: getSessionFromRequest
+  Scenario: Valid cookie but user deleted from DB
+  Input: valid JWT for userId that no longer exists
+  Mock: prisma.user.findUnique returns null
+  Expected Internal Path: decoded OK -> DB query -> null
+  Expected Output: null
+  Coverage: Deleted user edge case
+
+
+================================================================================
+SECTION 4: MODULE 2 - ORDER MANAGEMENT & STOCK STATE MACHINE
+================================================================================
+
+SOURCE FILES:
+  - prisma/order.ts
+  - app/api/orders/route.ts
+  - app/api/orders/[id]/route.ts
+
+--------------------------------------------------------------------------------
+4.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+FUNCTION: generateOrderNumber(): Promise<string>
+  Internal path:
+    1. Get current date/time components
+    2. Count orders created today (todayStart to todayEnd)
+    3. sequence = todayOrders + 1, padded to 4 digits
+    4. Return "ORD-{year}-{MMDD}-{HHMMSS}-{sequence}"
+  Critical: sequence is based on count at time of call, NOT atomic.
+  Race condition possible under high concurrency.
+
+FUNCTION: createOrder(data, userId)
+  Internal decision tree:
+    1. generateOrderNumber() -> unique order number
+    2. For each item in data.items:
+       a. prisma.product.findUnique -> if null -> throw Error("Product not found")
+       b. availableStock = product.quantity - product.reservedQuantity
+       c. if availableStock < item.quantity -> throw Error("Insufficient stock")
+       d. Calculate lineSubtotal = price * quantity
+       e. Push to orderItemsData and productsToReserve
+    3. Calculate total = subtotal + tax + shipping - discount
+    4. prisma.order.create with items embedded
+    5. For each product in productsToReserve:
+       prisma.product.update -> reservedQuantity += qty
+    6. Invalidate product cache (fire-and-forget, errors logged)
+    7. Return created order
+
+  STOCK RESERVATION LOGIC (CRITICAL):
+    - On order CREATE (pending): reservedQuantity INCREASES (stock reserved)
+    - On order CONFIRM/PAY: quantity DECREASES, reservedQuantity DECREASES
+    - On order CANCEL: reservedQuantity DECREASES (reservation released)
+    - availableStock = quantity - reservedQuantity (never goes negative)
+
+--------------------------------------------------------------------------------
+4.2 TEST CASES - ORDER MANAGEMENT
+--------------------------------------------------------------------------------
+
+TEST ID: ORD-001
+  Function: generateOrderNumber
+  Scenario: First order of the day (0 existing orders today)
+  Mock: prisma.order.count returns 0
+  Expected: sequence part = "0001"
+  Expected format: "ORD-2026-0401-HHMMSS-0001"
+  Coverage: Sequence generation, zero-count branch
+
+TEST ID: ORD-002
+  Function: generateOrderNumber
+  Scenario: 9999 orders already exist today
+  Mock: prisma.order.count returns 9999
+  Expected: sequence = "10000" (5 digits, overflow of 4-digit pad)
+  Note: This is a boundary test - the system should handle > 9999 orders/day
+  Coverage: Boundary value, sequence overflow
+
+TEST ID: ORD-003
+  Function: createOrder
+  Scenario: Product not found in database
+  Input: data.items = [{ productId: "nonexistent", quantity: 1 }]
+  Mock: prisma.product.findUnique returns null
+  Expected Internal Path: product === null -> throw Error("Product not found: nonexistent")
+  Expected: Error thrown with correct message
+  Coverage: Product not found branch
+
+TEST ID: ORD-004
+  Function: createOrder
+  Scenario: Insufficient available stock
+  Input: item.quantity = 10
+  Mock: product.quantity = 15, product.reservedQuantity = 8
+  Internal: availableStock = 15 - 8 = 7 < 10
+  Expected: throw Error("Insufficient stock for product X. Available: 7, Requested: 10")
+  Coverage: Stock check branch (insufficient)
+
+TEST ID: ORD-005
+  Function: createOrder
+  Scenario: Exactly enough stock (boundary)
+  Input: item.quantity = 7
+  Mock: product.quantity = 15, product.reservedQuantity = 8
+  Internal: availableStock = 7 == 7 (exactly enough)
+  Expected: Order created successfully, no error
+  Coverage: Boundary value (exact stock match)
+
+TEST ID: ORD-006
+  Function: createOrder
+  Scenario: One more than available stock (boundary + 1)
+  Input: item.quantity = 8
+  Mock: product.quantity = 15, product.reservedQuantity = 8
+  Internal: availableStock = 7 < 8
+  Expected: throw Error("Insufficient stock")
+  Coverage: Boundary value + 1
+
+TEST ID: ORD-007
+  Function: createOrder
+  Scenario: reservedQuantity is null (not yet set)
+  Mock: product.quantity = 10, product.reservedQuantity = null
+  Internal: availableStock = 10 - Number(null) = 10 - 0 = 10
+  Expected: availableStock correctly computed as 10
+  Coverage: Null coalescing in stock calculation
+
+TEST ID: ORD-008
+  Function: createOrder
+  Scenario: Multiple items, one fails stock check
+  Input: items = [{ productA, qty: 1 }, { productB, qty: 999 }]
+  Mock: productA has stock, productB has only 5
+  Expected: Error thrown on productB, NO reservation made for productA
+  Coverage: Partial failure rollback (atomicity check)
+  Note: This tests whether the loop fails fast before any DB writes
+
+TEST ID: ORD-009
+  Function: createOrder
+  Scenario: Tax, shipping, discount all provided
+  Input: subtotal=100, tax=10, shipping=5, discount=15
+  Expected: total = 100 + 10 + 5 - 15 = 100
+  Coverage: Total calculation formula
+
+TEST ID: ORD-010
+  Function: createOrder
+  Scenario: Tax and shipping are 0 (falsy)
+  Input: tax=0, shipping=0, discount=0
+  Internal: tax > 0 is false -> stored as null; shipping > 0 is false -> null
+  Expected: order.tax = null, order.shipping = null, order.discount = null
+  Coverage: Falsy-to-null conversion branches
+
+TEST ID: ORD-011
+  Function: createOrder
+  Scenario: Verify reservedQuantity incremented after order creation
+  Input: Single item, quantity = 3
+  Mock: product.reservedQuantity = 5 before order
+  Expected: After createOrder, product.reservedQuantity = 8
+  Coverage: Stock reservation side effect
+
+TEST ID: ORD-012
+  Route: GET /api/orders
+  Scenario: Unauthenticated request (no session cookie)
+  Mock: getSessionFromRequest returns null
+  Expected: { error: "Unauthorized" }, status 401
+  Coverage: Auth guard branch
+
+TEST ID: ORD-013
+  Route: GET /api/orders
+  Scenario: Supplier role with no supplier record
+  Mock: session.role = "supplier", getSupplierByUserId returns null
+  Expected: NextResponse.json([]) - empty array, not error
+  Coverage: Supplier without record branch
+
+TEST ID: ORD-014
+  Route: GET /api/orders
+  Scenario: Cache hit for orders list
+  Mock: getCache returns cached array
+  Expected: Returns cached data without DB query
+  Coverage: Cache hit branch
+
+TEST ID: ORD-015
+  Route: GET /api/orders
+  Scenario: Client role fetches only their orders
+  Mock: session.role = "client", session.id = "clientUserId"
+  Expected: getOrdersByClientId called with "clientUserId"
+  Coverage: Role-based query branching (client)
+
+TEST ID: ORD-016
+  Route: GET /api/orders
+  Scenario: Rate limit exceeded
+  Mock: withRateLimit returns a 429 response
+  Expected: 429 response returned immediately, no DB query
+  Coverage: Rate limit early return branch
+
+
+================================================================================
+SECTION 5: MODULE 3 - INVOICE GENERATION & FINANCIAL LOGIC
+================================================================================
+
+SOURCE FILES:
+  - prisma/invoice.ts
+  - app/api/invoices/route.ts
+
+--------------------------------------------------------------------------------
+5.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+FUNCTION: generateInvoiceNumber(): Promise<string>
+  Internal path:
+    1. Get current date: datePart = "YYYYMMDD", timePart = "HHMMSS"
+    2. randomPart = Math.floor(1000 + Math.random() * 9000) -> 4-digit number
+    3. invoiceNumber = "INV-{datePart}-{timePart}-{randomPart}"
+    4. Check uniqueness: prisma.invoice.findUnique({ where: { invoiceNumber } })
+    5. WHILE exists: generate new randomPart, check again
+    6. Return unique invoiceNumber
+  Critical: Uses random number, not sequential. Collision probability = 1/9000.
+  The while loop handles collisions but could theoretically loop forever.
+
+FUNCTION: createInvoice(data, userId)
+  Internal decision tree:
+    1. prisma.order.findUnique -> if null -> throw Error("Order not found")
+    2. prisma.invoice.findUnique({ where: { orderId } }) -> if exists -> throw Error("Invoice already exists")
+    3. generateInvoiceNumber() -> unique number
+    4. Calculate amounts:
+       subtotal = order.subtotal
+       tax = data.tax ?? order.tax ?? 0
+       shipping = data.shipping ?? order.shipping ?? 0
+       discount = data.discount ?? order.discount ?? 0
+       total = Math.max(0, subtotal + tax + shipping - discount)
+    5. amountPaid = 0 (always starts at 0)
+    6. amountDue = total
+    7. billingAddress from order (JSON parse/stringify)
+    8. prisma.invoice.create with status = "draft"
+
+  CRITICAL FINANCIAL LOGIC:
+    - total uses Math.max(0, ...) to prevent negative totals
+    - amountDue starts equal to total (no payments yet)
+    - tax/shipping/discount use nullish coalescing (??) not OR (||)
+      This means 0 values from data are respected (not overridden by order values)
+
+--------------------------------------------------------------------------------
+5.2 TEST CASES - INVOICE GENERATION
+--------------------------------------------------------------------------------
+
+TEST ID: INV-001
+  Function: generateInvoiceNumber
+  Scenario: No collision (first attempt is unique)
+  Mock: prisma.invoice.findUnique returns null on first call
+  Expected: Returns "INV-YYYYMMDD-HHMMSS-XXXX" format
+  Expected: While loop executes exactly once
+  Coverage: Happy path, no collision
+
+TEST ID: INV-002
+  Function: generateInvoiceNumber
+  Scenario: First attempt collides, second is unique
+  Mock: prisma.invoice.findUnique returns existing invoice on call 1, null on call 2
+  Expected: While loop executes twice, returns second generated number
+  Coverage: Collision handling branch (while loop iteration)
+
+TEST ID: INV-003
+  Function: generateInvoiceNumber
+  Scenario: Verify format structure
+  Expected: Result matches regex /^INV-\d{8}-\d{6}-\d{4}$/
+  Coverage: Output format validation
+
+TEST ID: INV-004
+  Function: createInvoice
+  Scenario: Order not found
+  Input: data.orderId = "nonexistent"
+  Mock: prisma.order.findUnique returns null
+  Expected: throw Error("Order with ID nonexistent not found")
+  Coverage: Order not found branch
+
+TEST ID: INV-005
+  Function: createInvoice
+  Scenario: Invoice already exists for this order
+  Mock: prisma.order.findUnique returns valid order
+  Mock: prisma.invoice.findUnique returns existing invoice
+  Expected: throw Error("Invoice already exists for order {orderId}")
+  Coverage: Duplicate invoice prevention branch
+
+TEST ID: INV-006
+  Function: createInvoice
+  Scenario: Total calculation with all fields
+  Input: order.subtotal=200, data.tax=20, data.shipping=10, data.discount=30
+  Expected: total = Math.max(0, 200 + 20 + 10 - 30) = 200
+  Coverage: Total formula
+
+TEST ID: INV-007
+  Function: createInvoice
+  Scenario: Discount exceeds subtotal + tax + shipping (negative total prevention)
+  Input: subtotal=50, tax=5, shipping=5, discount=100
+  Expected: total = Math.max(0, 50 + 5 + 5 - 100) = Math.max(0, -40) = 0
+  Coverage: Math.max(0, ...) negative prevention branch
+
+TEST ID: INV-008
+  Function: createInvoice
+  Scenario: data.tax is 0 (explicit zero, not null)
+  Input: data.tax = 0, order.tax = 15
+  Internal: tax = data.tax ?? order.tax ?? 0 = 0 ?? 15 = 0
+  Expected: tax = 0 (data value respected, not overridden by order.tax)
+  Coverage: Nullish coalescing vs OR operator distinction
+
+TEST ID: INV-009
+  Function: createInvoice
+  Scenario: data.tax is null/undefined, order.tax is 15
+  Input: data.tax = undefined, order.tax = 15
+  Internal: tax = undefined ?? 15 ?? 0 = 15
+  Expected: tax = 15 (falls back to order.tax)
+  Coverage: Fallback chain in nullish coalescing
+
+TEST ID: INV-010
+  Function: createInvoice
+  Scenario: data.tax is null, order.tax is null
+  Input: data.tax = null, order.tax = null
+  Internal: tax = null ?? null ?? 0 = 0
+  Expected: tax = 0 (final fallback)
+  Coverage: Double null fallback
+
+TEST ID: INV-011
+  Function: createInvoice
+  Scenario: amountPaid always starts at 0
+  Expected: invoice.amountPaid = 0 regardless of input
+  Expected: invoice.amountDue = invoice.total
+  Coverage: Initial payment state
+
+TEST ID: INV-012
+  Function: createInvoice
+  Scenario: Invoice status always starts as "draft"
+  Expected: invoice.status = "draft"
+  Coverage: Default status branch
+
+TEST ID: INV-013
+  Route: GET /api/invoices
+  Scenario: Client role sees only their invoices
+  Mock: session.role = "client"
+  Expected: getInvoicesByClientId called (not getInvoicesByUser)
+  Coverage: Role-based query branch
+
+TEST ID: INV-014
+  Route: GET /api/invoices
+  Scenario: Filter by multiple statuses
+  Input: ?status=draft&status=sent
+  Expected: filters.status = ["draft", "sent"]
+  Coverage: Multi-value query param parsing
+
+TEST ID: INV-015
+  Route: GET /api/invoices
+  Scenario: No status filter provided
+  Input: no status query param
+  Expected: filters.status = undefined (not empty array)
+  Coverage: Empty array vs undefined branch
+
+
+================================================================================
+SECTION 6: MODULE 4 - DEMAND FORECASTING ENGINE
+================================================================================
+
+SOURCE FILES:
+  - lib/forecasting/demand-forecast.ts
+
+CONFIGURATION CONSTANTS (must be tested at boundaries):
+  ANALYSIS_DAYS    = 30   (days of historical data)
+  FORECAST_DAYS    = 14   (days to forecast ahead)
+  ANOMALY_THRESHOLD = 2.0 (standard deviations for anomaly)
+  REORDER_LEAD_DAYS = 7   (days lead time)
+
+--------------------------------------------------------------------------------
+6.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+FUNCTION: calculateMovingAverage(values, window)
+  Internal path:
+    For each index i:
+      start = Math.max(0, i - window + 1)
+      windowValues = values.slice(start, i + 1)
+      avg = sum(windowValues) / windowValues.length
+  Note: For early indices where i < window-1, uses partial window (not full window)
+
+FUNCTION: calculateStdDev(values)
+  Internal path:
+    1. if values.length === 0 -> return 0
+    2. mean = sum(values) / values.length
+    3. squaredDiffs = values.map(v => (v - mean)^2)
+    4. avgSquaredDiff = sum(squaredDiffs) / values.length
+    5. return sqrt(avgSquaredDiff)
+  Note: Uses POPULATION std dev (divides by N, not N-1)
+
+FUNCTION: analyzeTrend(dailySales)
+  Internal branches:
+    Branch A: dailySales.length < 7 -> return { trend: "stable", percentageChange: 0 }
+    Branch B: length >= 7 -> perform linear regression
+      slope = (n*sumXY - sumX*sumY) / (n*sumXX - sumX*sumX)
+      percentageChange = avgY > 0 ? (slope * n * 100) / avgY : 0
+      Branch B1: percentageChange > 10  -> trend = "increasing"
+      Branch B2: percentageChange < -10 -> trend = "decreasing"
+      Branch B3: else                   -> trend = "stable"
+
+FUNCTION: detectAnomalies(productId, productName, sku, dailySales)
+  Internal branches:
+    Branch A: dailySales.length < 7 -> return [] (no anomalies)
+    Branch B: stdDev === 0 -> return [] (all values identical, no anomalies)
+    Branch C: For each day, zScore = |day.quantity - mean| / stdDev
+      if zScore > ANOMALY_THRESHOLD (2.0):
+        Branch C1: zScore > 3    -> severity = "high"
+        Branch C2: zScore > 2.5  -> severity = "medium"
+        Branch C3: else (> 2.0)  -> severity = "low"
+        Branch C4: day.quantity > mean -> anomalyType = "spike"
+        Branch C5: day.quantity < mean -> anomalyType = "drop"
+
+FUNCTION: generateProductForecast(...)
+  Internal path:
+    1. availableStock = currentStock - reservedStock
+    2. averageDailySales = sum(quantities) / quantities.length (or 0 if empty)
+    3. recentDays = dailySales.slice(-7) (last 7 days)
+    4. recentAvg = sum(recentDays) / recentDays.length (or 0 if empty)
+    5. predictedDailySales:
+       if recentDays.length >= 7: recentAvg * 0.7 + averageDailySales * 0.3
+       else: averageDailySales
+    6. daysUntilStockout:
+       if predictedDailySales > 0: floor(availableStock / predictedDailySales)
+       else: null
+    7. reorderRecommendation:
+       if daysUntilStockout <= 7:  "urgent"
+       if daysUntilStockout <= 14: "soon"
+       if daysUntilStockout > 90:  "overstocked"
+       else:                       "normal"
+    8. confidenceScore:
+       Base: 50
+       +30 if dailySales.length >= 30
+       +20 if dailySales.length >= 14
+       +10 if dailySales.length >= 7
+       CV = stdDev / averageDailySales
+       +20 if CV < 0.3
+       +10 if CV < 0.5
+       Capped at 100
+
+--------------------------------------------------------------------------------
+6.2 TEST CASES - DEMAND FORECASTING
+--------------------------------------------------------------------------------
+
+TEST ID: FORE-001
+  Function: calculateMovingAverage
+  Scenario: Window larger than data length
+  Input: values = [10, 20, 30], window = 5
+  Expected: [10, 15, 20] (partial windows used for first elements)
+  Coverage: Math.max(0, i - window + 1) branch for early indices
+
+TEST ID: FORE-002
+  Function: calculateMovingAverage
+  Scenario: Window of 1 (each value is its own average)
+  Input: values = [5, 10, 15], window = 1
+  Expected: [5, 10, 15]
+  Coverage: Window = 1 edge case
+
+TEST ID: FORE-003
+  Function: calculateMovingAverage
+  Scenario: Empty values array
+  Input: values = [], window = 3
+  Expected: [] (empty result)
+  Coverage: Empty input
+
+TEST ID: FORE-004
+  Function: calculateStdDev
+  Scenario: Empty array
+  Input: values = []
+  Expected: 0 (early return branch)
+  Coverage: Empty array branch
+
+TEST ID: FORE-005
+  Function: calculateStdDev
+  Scenario: All identical values (zero variance)
+  Input: values = [5, 5, 5, 5, 5]
+  Expected: 0
+  Coverage: Zero variance case (important for anomaly detection)
+
+TEST ID: FORE-006
+  Function: calculateStdDev
+  Scenario: Known values with calculable std dev
+  Input: values = [2, 4, 4, 4, 5, 5, 7, 9]
+  Expected: 2.0 (population std dev)
+  Coverage: Mathematical correctness
+
+TEST ID: FORE-007
+  Function: analyzeTrend
+  Scenario: Less than 7 data points
+  Input: dailySales = 6 days of data
+  Expected: { trend: "stable", percentageChange: 0, periodDays: 6 }
+  Coverage: Branch A (insufficient data)
+
+TEST ID: FORE-008
+  Function: analyzeTrend
+  Scenario: Exactly 7 data points (boundary)
+  Input: dailySales = 7 days of data with clear upward trend
+  Expected: trend = "increasing" (not "stable" due to < 7 check)
+  Coverage: Boundary value (exactly 7)
+
+TEST ID: FORE-009
+  Function: analyzeTrend
+  Scenario: Strongly increasing trend (>10% change)
+  Input: dailySales = [1,2,3,4,5,6,7,8,9,10] (10 days)
+  Expected: trend = "increasing", percentageChange > 10
+  Coverage: Branch B1
+
+TEST ID: FORE-010
+  Function: analyzeTrend
+  Scenario: Strongly decreasing trend (<-10% change)
+  Input: dailySales = [10,9,8,7,6,5,4,3,2,1] (10 days)
+  Expected: trend = "decreasing", percentageChange < -10
+  Coverage: Branch B2
+
+TEST ID: FORE-011
+  Function: analyzeTrend
+  Scenario: Flat/stable trend (within ±10%)
+  Input: dailySales = [5,5,5,5,5,5,5,5,5,5] (10 days)
+  Expected: trend = "stable", percentageChange = 0
+  Coverage: Branch B3
+
+TEST ID: FORE-012
+  Function: analyzeTrend
+  Scenario: avgY = 0 (all zero sales)
+  Input: dailySales = [0,0,0,0,0,0,0,0] (8 days of zero)
+  Internal: avgY = 0 -> percentageChange = 0 (division by zero protection)
+  Expected: trend = "stable", percentageChange = 0
+  Coverage: Division by zero protection
+
+TEST ID: FORE-013
+  Function: detectAnomalies
+  Scenario: Less than 7 data points
+  Input: dailySales = 5 days
+  Expected: [] (empty anomalies array)
+  Coverage: Branch A
+
+TEST ID: FORE-014
+  Function: detectAnomalies
+  Scenario: All identical values (stdDev = 0)
+  Input: dailySales = [5,5,5,5,5,5,5,5] (8 days, all same)
+  Internal: stdDev = 0 -> return [] (division by zero protection)
+  Expected: []
+  Coverage: Branch B (stdDev = 0)
+
+TEST ID: FORE-015
+  Function: detectAnomalies
+  Scenario: One spike with zScore > 3 (high severity)
+  Input: 29 days of value=5, 1 day of value=50
+  Internal: mean ≈ 6.5, stdDev ≈ 8.8, zScore for 50 ≈ 4.9 > 3
+  Expected: anomaly with severity = "high", anomalyType = "spike"
+  Coverage: Branch C1 + C4
+
+TEST ID: FORE-016
+  Function: detectAnomalies
+  Scenario: One drop with zScore between 2.5 and 3 (medium severity)
+  Input: Carefully crafted data where one day has zScore = 2.7
+  Expected: anomaly with severity = "medium", anomalyType = "drop"
+  Coverage: Branch C2 + C5
+
+TEST ID: FORE-017
+  Function: detectAnomalies
+  Scenario: Anomaly with zScore between 2.0 and 2.5 (low severity)
+  Input: Data where one day has zScore = 2.2
+  Expected: anomaly with severity = "low"
+  Coverage: Branch C3
+
+TEST ID: FORE-018
+  Function: generateProductForecast
+  Scenario: Zero predicted daily sales (no sales history)
+  Input: dailySales = [] (no sales data)
+  Internal: averageDailySales = 0, predictedDailySales = 0
+  Expected: daysUntilStockout = null (not Infinity or NaN)
+  Coverage: Division by zero protection in daysUntilStockout
+
+TEST ID: FORE-019
+  Function: generateProductForecast
+  Scenario: daysUntilStockout = 5 (urgent reorder)
+  Input: availableStock=50, predictedDailySales=10 -> days=5
+  Expected: reorderRecommendation = "urgent" (5 <= REORDER_LEAD_DAYS=7)
+  Coverage: Urgent branch
+
+TEST ID: FORE-020
+  Function: generateProductForecast
+  Scenario: daysUntilStockout = 7 (boundary: exactly lead days)
+  Input: availableStock=70, predictedDailySales=10 -> days=7
+  Expected: reorderRecommendation = "urgent" (7 <= 7)
+  Coverage: Boundary value for urgent
+
+TEST ID: FORE-021
+  Function: generateProductForecast
+  Scenario: daysUntilStockout = 8 (just past urgent, into "soon")
+  Input: availableStock=80, predictedDailySales=10 -> days=8
+  Expected: reorderRecommendation = "soon" (8 <= 14)
+  Coverage: Soon branch boundary
+
+TEST ID: FORE-022
+  Function: generateProductForecast
+  Scenario: daysUntilStockout = 91 (overstocked)
+  Input: availableStock=910, predictedDailySales=10 -> days=91
+  Expected: reorderRecommendation = "overstocked" (91 > 90)
+  Coverage: Overstocked branch
+
+TEST ID: FORE-023
+  Function: generateProductForecast
+  Scenario: daysUntilStockout = 90 (boundary: NOT overstocked)
+  Input: availableStock=900, predictedDailySales=10 -> days=90
+  Expected: reorderRecommendation = "normal" (90 is NOT > 90)
+  Coverage: Boundary value for overstocked
+
+TEST ID: FORE-024
+  Function: generateProductForecast
+  Scenario: Confidence score with 30+ days of data and low variability
+  Input: 30 days of data, all values = 5 (CV = 0)
+  Expected: confidenceScore = 50 + 30 + 20 = 100 (capped at 100)
+  Coverage: Max confidence score + cap
+
+TEST ID: FORE-025
+  Function: generateProductForecast
+  Scenario: Confidence score with 6 days of data (below all thresholds)
+  Input: 6 days of data
+  Expected: confidenceScore = 50 (base only, no bonus)
+  Coverage: Minimum confidence score
+
+TEST ID: FORE-026
+  Function: generateProductForecast
+  Scenario: Weighted average uses recent data correctly
+  Input: 10 days of data (>= 7 recent days available)
+  Internal: predictedDailySales = recentAvg * 0.7 + averageDailySales * 0.3
+  Expected: Verify the 70/30 weighting is applied
+  Coverage: Weighted average branch (recentDays.length >= 7)
+
+TEST ID: FORE-027
+  Function: generateProductForecast
+  Scenario: Less than 7 recent days (uses overall average only)
+  Input: 5 days of data total
+  Internal: recentDays.length = 5 < 7 -> predictedDailySales = averageDailySales
+  Expected: No weighting applied
+  Coverage: Fallback to overall average branch
+
+
+================================================================================
+SECTION 7: MODULE 5 - EMAIL NOTIFICATION SYSTEM
+================================================================================
+
+SOURCE FILES:
+  - lib/email/notifications.ts
+  - lib/email/brevo.ts (implied)
+  - lib/email/queue.ts (implied)
+  - lib/email/preferences.ts (implied)
+
+--------------------------------------------------------------------------------
+7.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+CONSTANT: LOW_STOCK_THRESHOLD = 20
+
+FUNCTION: isLowStock(quantity, threshold = 20): boolean
+  Internal logic: return quantity > 0 && quantity <= threshold
+  Two conditions must BOTH be true:
+    - quantity must be greater than 0 (not out of stock)
+    - quantity must be at or below threshold
+
+FUNCTION: isOutOfStock(quantity): boolean
+  Internal logic: return quantity === 0
+  Uses strict equality (=== not ==)
+
+FUNCTION: sendLowStockAlert(data, recipientEmail?, recipientName?, userId?)
+  Internal decision tree:
+    Branch A: !isBrevoConfigured() -> log warning, return (skip)
+    Branch B: userId provided AND isEmailNotificationEnabled returns false -> log info, return (skip)
+    Branch C: Both checks pass -> proceed to send email
+
+--------------------------------------------------------------------------------
+7.2 TEST CASES - EMAIL NOTIFICATIONS
+--------------------------------------------------------------------------------
+
+TEST ID: EMAIL-001
+  Function: isLowStock
+  Scenario: Quantity is 0 (out of stock, not low stock)
+  Input: quantity = 0, threshold = 20
+  Internal: 0 > 0 is FALSE -> short-circuit -> return false
+  Expected: false
+  Coverage: First condition false (AND short-circuit)
+
+TEST ID: EMAIL-002
+  Function: isLowStock
+  Scenario: Quantity is exactly at threshold (boundary)
+  Input: quantity = 20, threshold = 20
+  Internal: 20 > 0 AND 20 <= 20 -> true
+  Expected: true
+  Coverage: Boundary value (at threshold)
+
+TEST ID: EMAIL-003
+  Function: isLowStock
+  Scenario: Quantity is one above threshold (boundary + 1)
+  Input: quantity = 21, threshold = 20
+  Internal: 21 > 0 AND 21 <= 20 -> false
+  Expected: false
+  Coverage: Boundary value + 1
+
+TEST ID: EMAIL-004
+  Function: isLowStock
+  Scenario: Quantity is 1 (minimum low stock)
+  Input: quantity = 1, threshold = 20
+  Expected: true
+  Coverage: Minimum positive value
+
+TEST ID: EMAIL-005
+  Function: isLowStock
+  Scenario: Custom threshold
+  Input: quantity = 5, threshold = 10
+  Expected: true (5 <= 10 and 5 > 0)
+  Coverage: Custom threshold parameter
+
+TEST ID: EMAIL-006
+  Function: isLowStock
+  Scenario: Negative quantity (data corruption scenario)
+  Input: quantity = -1, threshold = 20
+  Internal: -1 > 0 is FALSE -> return false
+  Expected: false (negative stock is not "low stock")
+  Coverage: Negative input edge case
+
+TEST ID: EMAIL-007
+  Function: isOutOfStock
+  Scenario: Quantity is exactly 0
+  Input: quantity = 0
+  Expected: true
+  Coverage: Exact zero match
+
+TEST ID: EMAIL-008
+  Function: isOutOfStock
+  Scenario: Quantity is 1 (not out of stock)
+  Input: quantity = 1
+  Expected: false
+  Coverage: Non-zero value
+
+TEST ID: EMAIL-009
+  Function: isOutOfStock
+  Scenario: Quantity is -1 (corrupted data)
+  Input: quantity = -1
+  Internal: -1 === 0 is false
+  Expected: false (strict equality, -1 is not 0)
+  Coverage: Strict equality check
+
+TEST ID: EMAIL-010
+  Function: sendLowStockAlert
+  Scenario: Brevo not configured
+  Mock: isBrevoConfigured() returns false
+  Expected: Function returns early, no email sent, warning logged
+  Coverage: Branch A
+
+TEST ID: EMAIL-011
+  Function: sendLowStockAlert
+  Scenario: User has disabled low stock alerts
+  Mock: isBrevoConfigured() returns true
+  Mock: isEmailNotificationEnabled(userId, "lowStockAlerts") returns false
+  Expected: Function returns early, no email sent, info logged
+  Coverage: Branch B
+
+TEST ID: EMAIL-012
+  Function: sendLowStockAlert
+  Scenario: No userId provided (skip preference check)
+  Mock: isBrevoConfigured() returns true
+  Input: userId = undefined
+  Expected: Preference check skipped, email proceeds to send
+  Coverage: userId undefined branch (skip preference check)
+
+TEST ID: EMAIL-013
+  Function: sendLowStockAlert
+  Scenario: All checks pass, email sent successfully
+  Mock: isBrevoConfigured() = true, isEmailNotificationEnabled = true
+  Expected: Email queued/sent, no early return
+  Coverage: Branch C (happy path)
+
+
+================================================================================
+SECTION 8: MODULE 6 - RATE LIMITING & CACHING
+================================================================================
+
+SOURCE FILES:
+  - lib/api/rate-limit.ts
+  - lib/cache.ts (implied)
+
+--------------------------------------------------------------------------------
+8.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+RATE LIMIT CONFIGURATIONS:
+  standard: 600 requests per 60 seconds
+  strict:   10 requests per 60 seconds
+  auth:     5 requests per 60 seconds
+
+IDENTIFIER RESOLUTION (standard/strict):
+  1. Check x-user-id header -> if present: "user:{userId}"
+  2. Else check x-real-ip -> "ip:{ip}"
+  3. Else check x-forwarded-for -> "ip:{ip}"
+  4. Else: "ip:unknown"
+
+IDENTIFIER RESOLUTION (auth):
+  Always uses IP (ignores user ID) to prevent brute force per-account
+
+FUNCTION: withRateLimit(request, config, overrideIdentifier?)
+  Internal path:
+    1. Get identifier (overrideIdentifier OR config.getIdentifier(request))
+    2. checkRateLimit(identifier, config.limit, config.window)
+    3. If rate limited: return 429 response with Retry-After header
+    4. If not limited: return null (allow request to proceed)
+
+--------------------------------------------------------------------------------
+8.2 TEST CASES - RATE LIMITING
+--------------------------------------------------------------------------------
+
+TEST ID: RATE-001
+  Function: defaultRateLimits.standard.getIdentifier
+  Scenario: x-user-id header present
+  Input: request with header x-user-id = "user123"
+  Expected: "user:user123"
+  Coverage: User ID branch
+
+TEST ID: RATE-002
+  Function: defaultRateLimits.standard.getIdentifier
+  Scenario: No user ID, x-real-ip present
+  Input: request with x-real-ip = "192.168.1.1", no x-user-id
+  Expected: "ip:192.168.1.1"
+  Coverage: IP fallback branch
+
+TEST ID: RATE-003
+  Function: defaultRateLimits.standard.getIdentifier
+  Scenario: No user ID, no x-real-ip, x-forwarded-for present
+  Input: request with x-forwarded-for = "10.0.0.1"
+  Expected: "ip:10.0.0.1"
+  Coverage: x-forwarded-for fallback branch
+
+TEST ID: RATE-004
+  Function: defaultRateLimits.standard.getIdentifier
+  Scenario: No identifying headers at all
+  Input: request with no relevant headers
+  Expected: "ip:unknown"
+  Coverage: Unknown fallback branch
+
+TEST ID: RATE-005
+  Function: defaultRateLimits.auth.getIdentifier
+  Scenario: Auth endpoint always uses IP even if user ID present
+  Input: request with x-user-id = "user123" AND x-real-ip = "1.2.3.4"
+  Expected: "ip:1.2.3.4" (NOT "user:user123")
+  Coverage: Auth always-IP security requirement
+
+TEST ID: RATE-006
+  Function: withRateLimit
+  Scenario: Under rate limit (first request)
+  Mock: checkRateLimit returns { limited: false }
+  Expected: returns null (request allowed)
+  Coverage: Not limited branch
+
+TEST ID: RATE-007
+  Function: withRateLimit
+  Scenario: Rate limit exceeded
+  Mock: checkRateLimit returns { limited: true, retryAfter: 30 }
+  Expected: returns NextResponse with status 429
+  Expected: Response includes Retry-After header
+  Coverage: Rate limited branch
+
+TEST ID: RATE-008
+  Scenario: Auth endpoint rate limit is stricter than standard
+  Verify: auth.limit (5) < strict.limit (10) < standard.limit (600)
+  Coverage: Configuration values validation
+
+
+================================================================================
+SECTION 9: MODULE 7 - INPUT VALIDATION (ZOD SCHEMAS)
+================================================================================
+
+SOURCE FILES:
+  - lib/validations/index.ts (implied)
+  - lib/validations/product.ts (implied)
+  - lib/validations/order.ts (implied)
+
+--------------------------------------------------------------------------------
+9.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+Zod schemas define the shape and constraints of all incoming data.
+When .parse() is called:
+  - If valid: returns typed, parsed data
+  - If invalid: throws ZodError with detailed field-level errors
+
+loginSchema fields (from login route usage):
+  - email: string, must be valid email format
+  - password: string, required
+
+createOrderSchema fields (from order route usage):
+  - items: array of { productId: string, quantity: number }
+  - tax?: number (optional)
+  - shipping?: number (optional)
+  - discount?: number (optional)
+  - clientId?: string (optional)
+  - shippingAddress?: object (optional)
+  - billingAddress?: object (optional)
+  - notes?: string (optional)
+
+createInvoiceSchema fields (from invoice route usage):
+  - orderId: string (required)
+  - dueDate: string/date (required)
+  - tax?: number (optional)
+  - shipping?: number (optional)
+  - discount?: number (optional)
+  - notes?: string (optional)
+
+--------------------------------------------------------------------------------
+9.2 TEST CASES - INPUT VALIDATION
+--------------------------------------------------------------------------------
+
+TEST ID: VAL-001
+  Schema: loginSchema
+  Scenario: Valid email and password
+  Input: { email: "user@example.com", password: "pass123" }
+  Expected: Parses successfully, returns typed object
+  Coverage: Happy path
+
+TEST ID: VAL-002
+  Schema: loginSchema
+  Scenario: Invalid email format
+  Input: { email: "not-an-email", password: "pass123" }
+  Expected: ZodError thrown, error on "email" field
+  Coverage: Email format validation
+
+TEST ID: VAL-003
+  Schema: loginSchema
+  Scenario: Missing password field
+  Input: { email: "user@example.com" }
+  Expected: ZodError thrown, error on "password" field
+  Coverage: Required field missing
+
+TEST ID: VAL-004
+  Schema: loginSchema
+  Scenario: Empty string password
+  Input: { email: "user@example.com", password: "" }
+  Expected: ZodError (if min length enforced) or success (if no min)
+  Coverage: Empty string handling
+
+TEST ID: VAL-005
+  Schema: createOrderSchema
+  Scenario: Empty items array
+  Input: { items: [] }
+  Expected: ZodError (if min(1) enforced) or success
+  Coverage: Empty array validation
+
+TEST ID: VAL-006
+  Schema: createOrderSchema
+  Scenario: Item with quantity = 0
+  Input: { items: [{ productId: "abc", quantity: 0 }] }
+  Expected: ZodError (if min(1) enforced on quantity)
+  Coverage: Zero quantity validation
+
+TEST ID: VAL-007
+  Schema: createOrderSchema
+  Scenario: Item with negative quantity
+  Input: { items: [{ productId: "abc", quantity: -5 }] }
+  Expected: ZodError (negative quantity not allowed)
+  Coverage: Negative number validation
+
+TEST ID: VAL-008
+  Schema: createOrderSchema
+  Scenario: Item with non-integer quantity (float)
+  Input: { items: [{ productId: "abc", quantity: 1.5 }] }
+  Expected: ZodError (if integer enforced) or coerced to 1
+  Coverage: Float vs integer validation
+
+TEST ID: VAL-009
+  Schema: createOrderSchema
+  Scenario: Negative discount value
+  Input: { items: [...], discount: -10 }
+  Expected: ZodError (if non-negative enforced)
+  Coverage: Negative discount validation
+
+TEST ID: VAL-010
+  Schema: createInvoiceSchema
+  Scenario: Missing orderId
+  Input: { dueDate: "2026-05-01" }
+  Expected: ZodError on "orderId" field
+  Coverage: Required field validation
+
+TEST ID: VAL-011
+  Schema: createInvoiceSchema
+  Scenario: Invalid date format for dueDate
+  Input: { orderId: "abc", dueDate: "not-a-date" }
+  Expected: ZodError on "dueDate" field
+  Coverage: Date format validation
+
+TEST ID: VAL-012
+  Scenario: SQL/NoSQL injection attempt in string fields
+  Input: { email: "'; DROP TABLE users; --" }
+  Expected: Either ZodError (invalid email) or safely stored as string
+  Note: MongoDB is not SQL-injectable, but Zod should reject invalid emails
+  Coverage: Injection attempt handling
+
+TEST ID: VAL-013
+  Scenario: XSS attempt in notes field
+  Input: { notes: "<script>alert('xss')</script>" }
+  Expected: Stored as plain string (no execution), or sanitized
+  Coverage: XSS in text fields
+
+TEST ID: VAL-014
+  Scenario: Extremely long string input
+  Input: { notes: "A".repeat(100000) }
+  Expected: ZodError if max length enforced, or stored (check DB limits)
+  Coverage: Max length boundary
+
+TEST ID: VAL-015
+  Scenario: Null values for optional fields
+  Input: { tax: null, shipping: null }
+  Expected: Accepted (optional fields can be null)
+  Coverage: Null optional field handling
+
+
+================================================================================
+SECTION 10: MODULE 8 - ROLE-BASED ACCESS CONTROL (RBAC)
+================================================================================
+
+SOURCE FILES:
+  - app/api/orders/route.ts
+  - app/api/products/route.ts
+  - app/api/invoices/route.ts
+  - middleware.ts (implied)
+
+--------------------------------------------------------------------------------
+10.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+ROLE DECISION TREES IN API ROUTES:
+
+Products GET:
+  if session.role === "supplier":
+    -> getSupplierByUserId(session.id)
+    -> if no supplier record: return []
+    -> query by supplierId
+  else (admin/user):
+    -> query by userId
+
+Orders GET:
+  if session.role === "client":
+    -> getOrdersByClientId(session.id)
+  else if session.role === "supplier":
+    -> getSupplierByUserId(session.id)
+    -> if no supplier: return []
+    -> getOrdersContainingSupplierProducts(supplier.id)
+  else (admin/user):
+    -> getOrdersByUser(session.id)
+
+Invoices GET:
+  if session.role === "client":
+    -> getInvoicesByClientId(session.id)
+  else:
+    -> getInvoicesByUser(session.id)
+
+--------------------------------------------------------------------------------
+10.2 TEST CASES - RBAC
+--------------------------------------------------------------------------------
+
+TEST ID: RBAC-001
+  Scenario: Admin user accesses products
+  Mock: session.role = "admin" (or "user")
+  Expected: Products queried by userId (not supplierId)
+  Coverage: Admin/user branch in products
+
+TEST ID: RBAC-002
+  Scenario: Supplier accesses products - supplier record exists
+  Mock: session.role = "supplier", getSupplierByUserId returns supplier
+  Expected: Products queried by supplierId
+  Coverage: Supplier with record branch
+
+TEST ID: RBAC-003
+  Scenario: Supplier accesses products - NO supplier record
+  Mock: session.role = "supplier", getSupplierByUserId returns null
+  Expected: Returns [] immediately (empty array, not error)
+  Coverage: Supplier without record branch
+
+TEST ID: RBAC-004
+  Scenario: Client accesses orders
+  Mock: session.role = "client"
+  Expected: getOrdersByClientId called with session.id
+  Coverage: Client orders branch
+
+TEST ID: RBAC-005
+  Scenario: Supplier accesses orders - supplier record exists
+  Mock: session.role = "supplier", supplier found
+  Expected: getOrdersContainingSupplierProducts called
+  Coverage: Supplier orders branch
+
+TEST ID: RBAC-006
+  Scenario: Client accesses invoices
+  Mock: session.role = "client"
+  Expected: getInvoicesByClientId called (not getInvoicesByUser)
+  Coverage: Client invoices branch
+
+TEST ID: RBAC-007
+  Scenario: Admin accesses invoices
+  Mock: session.role = "admin"
+  Expected: getInvoicesByUser called
+  Coverage: Admin invoices branch
+
+TEST ID: RBAC-008
+  Scenario: Unauthenticated request to any protected route
+  Mock: getSessionFromRequest returns null
+  Expected: 401 Unauthorized response
+  Coverage: Auth guard (all routes)
+
+TEST ID: RBAC-009
+  Scenario: Client tries to access admin-only endpoint
+  Mock: session.role = "client", endpoint requires admin
+  Expected: 403 Forbidden (if RBAC middleware enforced)
+  Coverage: Role elevation prevention
+
+TEST ID: RBAC-010
+  Scenario: Supplier tries to access another supplier's products
+  Mock: session.role = "supplier", supplierId = "supplierA"
+  Expected: Only products with supplierId = "supplierA" returned
+  Coverage: Data isolation between suppliers
+
+TEST ID: RBAC-011
+  Scenario: User tries to access another user's orders by manipulating userId
+  Mock: session.id = "userA", request attempts to get orders for "userB"
+  Expected: Only userA's orders returned (userId from session, not request)
+  Coverage: Horizontal privilege escalation prevention
+
+
+================================================================================
+SECTION 11: MODULE 9 - DATA INTEGRITY & DATABASE LAYER
+================================================================================
+
+SOURCE FILES:
+  - prisma/schema.prisma
+  - prisma/order.ts
+  - prisma/invoice.ts
+  - prisma/client.ts (implied)
+
+--------------------------------------------------------------------------------
+11.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+UNIQUE CONSTRAINTS (must be enforced at DB level):
+  - User.email          : No two users with same email
+  - Product.sku         : No two products with same SKU (per user implied)
+  - Order.orderNumber   : Globally unique order numbers
+  - Invoice.invoiceNumber: Globally unique invoice numbers
+  - Invoice.orderId     : One invoice per order (unique foreign key)
+
+CASCADE RELATIONSHIPS:
+  - Order deleted -> Invoice deleted (onDelete: Cascade)
+  - Order deleted -> OrderItems deleted (implied by embedded array)
+
+BIGINT HANDLING:
+  - product.quantity and product.reservedQuantity may be BigInt in MongoDB
+  - Code uses Number() conversion: Number(product.quantity)
+  - Risk: BigInt values > Number.MAX_SAFE_INTEGER lose precision
+
+AUDIT LOGGING:
+  - createAuditLog called after every significant operation
+  - Must not block main operation (fire-and-forget or try/catch)
+
+--------------------------------------------------------------------------------
+11.2 TEST CASES - DATA INTEGRITY
+--------------------------------------------------------------------------------
+
+TEST ID: DB-001
+  Scenario: Duplicate email registration
+  Input: Two users with email = "same@test.com"
+  Expected: Second create throws Prisma unique constraint error
+  Coverage: User.email unique constraint
+
+TEST ID: DB-002
+  Scenario: Duplicate order number
+  Input: Two orders with orderNumber = "ORD-2026-0401-120000-0001"
+  Expected: Second create throws Prisma unique constraint error
+  Coverage: Order.orderNumber unique constraint
+
+TEST ID: DB-003
+  Scenario: Duplicate invoice for same order
+  Input: Two invoices with orderId = "same-order-id"
+  Expected: Second create throws Prisma unique constraint error
+  Coverage: Invoice.orderId unique constraint
+
+TEST ID: DB-004
+  Scenario: Cascade delete - deleting order removes invoice
+  Steps:
+    1. Create order
+    2. Create invoice for that order
+    3. Delete the order
+  Expected: Invoice is also deleted (cascade)
+  Coverage: onDelete: Cascade relationship
+
+TEST ID: DB-005
+  Scenario: BigInt quantity serialization
+  Input: product.quantity = BigInt(9007199254740993) (> MAX_SAFE_INTEGER)
+  Expected: Number(product.quantity) loses precision (known limitation)
+  Note: This is a documentation test - verify the system handles or warns about this
+  Coverage: BigInt edge case
+
+TEST ID: DB-006
+  Scenario: availableStock calculation with BigInt
+  Input: product.quantity = BigInt(100), product.reservedQuantity = BigInt(30)
+  Internal: availableStock = Number(100) - Number(30) = 70
+  Expected: 70 (correct)
+  Coverage: BigInt to Number conversion in stock calculation
+
+TEST ID: DB-007
+  Scenario: Order creation atomicity - if reservedQuantity update fails
+  Mock: prisma.product.update throws error after order.create succeeds
+  Expected: Order exists but stock not reserved (partial state)
+  Note: This reveals a lack of transaction wrapping - document as known issue
+  Coverage: Transaction atomicity gap
+
+TEST ID: DB-008
+  Scenario: Audit log failure does not break main operation
+  Mock: createAuditLog throws an error
+  Expected: Main operation (order create, etc.) still succeeds
+  Coverage: Audit log error isolation
+
+TEST ID: DB-009
+  Scenario: Cache invalidation failure does not break order creation
+  Mock: invalidateCache throws an error
+  Expected: Order still created, error logged to console
+  Coverage: Cache invalidation error handling (fire-and-forget)
+
+TEST ID: DB-010
+  Scenario: Prisma client not initialized (DB connection failure)
+  Mock: prisma.order.create throws PrismaClientInitializationError
+  Expected: API returns 500 with appropriate error message
+  Coverage: DB connection failure handling
+
+
+================================================================================
+SECTION 12: MODULE 10 - STRIPE PAYMENT & WEBHOOK HANDLING
+================================================================================
+
+SOURCE FILES:
+  - app/api/payments/route.ts (implied)
+  - lib/stripe.ts (implied)
+
+--------------------------------------------------------------------------------
+12.1 INTERNAL LOGIC WALKTHROUGH
+--------------------------------------------------------------------------------
+
+STRIPE WEBHOOK SECURITY:
+  - Webhooks must be verified using Stripe-Signature header
+  - stripe.webhooks.constructEvent(body, signature, webhookSecret)
+  - If signature invalid: throws error -> return 400
+  - If valid: process event based on event.type
+
+PAYMENT INTENT EVENTS:
+  - payment_intent.succeeded -> mark order as paid, generate invoice
+  - payment_intent.payment_failed -> mark order payment as failed
+  - charge.refunded -> update invoice amountPaid, amountDue
+
+REFUND LOGIC (from createStripeRefund in prisma/order.ts):
+  - Requires stripePaymentIntentId on order
+  - Creates refund via Stripe API
+  - Updates order.paymentStatus = "refunded"
+
+--------------------------------------------------------------------------------
+12.2 TEST CASES - STRIPE PAYMENTS
+--------------------------------------------------------------------------------
+
+TEST ID: PAY-001
+  Scenario: Webhook with invalid signature
+  Input: Valid body but wrong Stripe-Signature header
+  Expected: stripe.webhooks.constructEvent throws -> 400 response
+  Coverage: Signature verification failure branch
+
+TEST ID: PAY-002
+  Scenario: Webhook with missing signature header
+  Input: No Stripe-Signature header
+  Expected: 400 response (cannot verify)
+  Coverage: Missing signature branch
+
+TEST ID: PAY-003
+  Scenario: payment_intent.succeeded event
+  Mock: Valid webhook, event.type = "payment_intent.succeeded"
+  Expected: Order paymentStatus updated to "paid"
+  Coverage: Payment success event handler
+
+TEST ID: PAY-004
+  Scenario: payment_intent.payment_failed event
+  Mock: Valid webhook, event.type = "payment_intent.payment_failed"
+  Expected: Order paymentStatus updated to "failed" or remains "unpaid"
+  Coverage: Payment failure event handler
+
+TEST ID: PAY-005
+  Scenario: Unknown webhook event type
+  Mock: event.type = "some.unknown.event"
+  Expected: Event ignored gracefully, 200 response (acknowledge receipt)
+  Coverage: Unknown event type branch
+
+TEST ID: PAY-006
+  Scenario: Refund for order without stripePaymentIntentId
+  Input: Order with stripePaymentIntentId = null
+  Expected: Error thrown or graceful failure
+  Coverage: Missing payment intent for refund
+
+TEST ID: PAY-007
+  Scenario: Stripe API unavailable during refund
+  Mock: Stripe API throws network error
+  Expected: Error caught, logged, appropriate response returned
+  Coverage: External API failure handling
+
+
+================================================================================
+SECTION 13: COMPLETE TEST CASE MATRIX
+================================================================================
+
+This matrix provides a quick reference for all test cases, their coverage type,
+priority, and expected pass/fail criteria.
+
+FORMAT: [TEST ID] | [MODULE] | [SCENARIO] | [COVERAGE TYPE] | [PRIORITY]
+PRIORITY: P1=Critical, P2=High, P3=Medium, P4=Low
+
+--------------------------------------------------------------------------------
+AUTHENTICATION TESTS
+--------------------------------------------------------------------------------
+AUTH-001 | Auth | verifyToken - empty string          | Branch    | P1
+AUTH-002 | Auth | verifyToken - string "null"          | Branch    | P1
+AUTH-003 | Auth | verifyToken - string "undefined"     | Branch    | P1
+AUTH-004 | Auth | verifyToken - valid JWT              | Statement | P1
+AUTH-005 | Auth | verifyToken - expired JWT            | Exception | P1
+AUTH-006 | Auth | verifyToken - wrong secret           | Security  | P1
+AUTH-007 | Auth | verifyToken - malformed token        | Exception | P1
+AUTH-008 | Auth | generateToken - payload integrity    | Statement | P1
+AUTH-009 | Auth | hashPassword + comparePassword       | Statement | P1
+AUTH-010 | Auth | comparePassword - wrong password     | Branch    | P1
+AUTH-011 | Auth | Login - missing email field          | Validation| P1
+AUTH-012 | Auth | Login - user not found               | Branch    | P1
+AUTH-013 | Auth | Login - corrupted user data          | Branch    | P2
+AUTH-014 | Auth | Login - correct credentials          | Statement | P1
+AUTH-015 | Auth | getSession - no cookie               | Branch    | P1
+AUTH-016 | Auth | getSession - deleted user            | Branch    | P2
+
+--------------------------------------------------------------------------------
+ORDER MANAGEMENT TESTS
+--------------------------------------------------------------------------------
+ORD-001  | Orders | generateOrderNumber - first order  | Statement | P2
+ORD-002  | Orders | generateOrderNumber - 9999 orders  | Boundary  | P3
+ORD-003  | Orders | createOrder - product not found    | Branch    | P1
+ORD-004  | Orders | createOrder - insufficient stock   | Branch    | P1
+ORD-005  | Orders | createOrder - exact stock match    | Boundary  | P1
+ORD-006  | Orders | createOrder - one over stock       | Boundary  | P1
+ORD-007  | Orders | createOrder - null reservedQty     | Branch    | P2
+ORD-008  | Orders | createOrder - partial failure      | Atomicity | P1
+ORD-009  | Orders | createOrder - total calculation    | Statement | P1
+ORD-010  | Orders | createOrder - zero tax/shipping    | Branch    | P2
+ORD-011  | Orders | createOrder - stock reservation    | Side-effect| P1
+ORD-012  | Orders | GET orders - unauthenticated       | Security  | P1
+ORD-013  | Orders | GET orders - supplier no record    | Branch    | P2
+ORD-014  | Orders | GET orders - cache hit             | Statement | P2
+ORD-015  | Orders | GET orders - client role           | Branch    | P1
+ORD-016  | Orders | GET orders - rate limited          | Branch    | P2
+
+--------------------------------------------------------------------------------
+INVOICE TESTS
+--------------------------------------------------------------------------------
+INV-001  | Invoice | generateInvoiceNumber - no collision | Statement | P2
+INV-002  | Invoice | generateInvoiceNumber - collision    | Branch    | P2
+INV-003  | Invoice | generateInvoiceNumber - format       | Statement | P2
+INV-004  | Invoice | createInvoice - order not found      | Branch    | P1
+INV-005  | Invoice | createInvoice - duplicate invoice    | Branch    | P1
+INV-006  | Invoice | createInvoice - total calculation    | Statement | P1
+INV-007  | Invoice | createInvoice - negative total       | Branch    | P1
+INV-008  | Invoice | createInvoice - explicit zero tax    | Branch    | P2
+INV-009  | Invoice | createInvoice - null tax fallback    | Branch    | P2
+INV-010  | Invoice | createInvoice - double null fallback | Branch    | P2
+INV-011  | Invoice | createInvoice - amountPaid = 0       | Statement | P1
+INV-012  | Invoice | createInvoice - status = draft       | Statement | P1
+INV-013  | Invoice | GET invoices - client role           | Branch    | P1
+INV-014  | Invoice | GET invoices - multi-status filter   | Statement | P2
+INV-015  | Invoice | GET invoices - no status filter      | Branch    | P2
+
+--------------------------------------------------------------------------------
+FORECASTING TESTS
+--------------------------------------------------------------------------------
+FORE-001 | Forecast | movingAvg - window > data length  | Branch    | P2
+FORE-002 | Forecast | movingAvg - window = 1            | Boundary  | P2
+FORE-003 | Forecast | movingAvg - empty array           | Boundary  | P2
+FORE-004 | Forecast | stdDev - empty array              | Branch    | P1
+FORE-005 | Forecast | stdDev - all identical values     | Statement | P1
+FORE-006 | Forecast | stdDev - known values             | Statement | P1
+FORE-007 | Forecast | analyzeTrend - < 7 data points    | Branch    | P1
+FORE-008 | Forecast | analyzeTrend - exactly 7 points   | Boundary  | P1
+FORE-009 | Forecast | analyzeTrend - increasing         | Branch    | P1
+FORE-010 | Forecast | analyzeTrend - decreasing         | Branch    | P1
+FORE-011 | Forecast | analyzeTrend - stable             | Branch    | P1
+FORE-012 | Forecast | analyzeTrend - all zero sales     | Branch    | P1
+FORE-013 | Forecast | detectAnomalies - < 7 points      | Branch    | P1
+FORE-014 | Forecast | detectAnomalies - stdDev = 0      | Branch    | P1
+FORE-015 | Forecast | detectAnomalies - high severity   | Branch    | P1
+FORE-016 | Forecast | detectAnomalies - medium severity | Branch    | P2
+FORE-017 | Forecast | detectAnomalies - low severity    | Branch    | P2
+FORE-018 | Forecast | forecast - zero sales (no crash)  | Branch    | P1
+FORE-019 | Forecast | forecast - urgent reorder         | Branch    | P1
+FORE-020 | Forecast | forecast - urgent boundary (=7)   | Boundary  | P1
+FORE-021 | Forecast | forecast - soon boundary (=8)     | Boundary  | P1
+FORE-022 | Forecast | forecast - overstocked (>90)      | Branch    | P2
+FORE-023 | Forecast | forecast - not overstocked (=90)  | Boundary  | P2
+FORE-024 | Forecast | forecast - max confidence score   | Statement | P3
+FORE-025 | Forecast | forecast - min confidence score   | Statement | P3
+FORE-026 | Forecast | forecast - weighted average       | Statement | P2
+FORE-027 | Forecast | forecast - fallback to overall avg| Branch    | P2
+
+--------------------------------------------------------------------------------
+EMAIL NOTIFICATION TESTS
+--------------------------------------------------------------------------------
+EMAIL-001 | Email | isLowStock - quantity = 0           | Branch    | P1
+EMAIL-002 | Email | isLowStock - at threshold (=20)     | Boundary  | P1
+EMAIL-003 | Email | isLowStock - above threshold (=21)  | Boundary  | P1
+EMAIL-004 | Email | isLowStock - minimum (=1)           | Boundary  | P2
+EMAIL-005 | Email | isLowStock - custom threshold       | Statement | P2
+EMAIL-006 | Email | isLowStock - negative quantity      | Branch    | P2
+EMAIL-007 | Email | isOutOfStock - exactly 0            | Statement | P1
+EMAIL-008 | Email | isOutOfStock - quantity = 1         | Statement | P1
+EMAIL-009 | Email | isOutOfStock - negative quantity    | Branch    | P2
+EMAIL-010 | Email | sendLowStockAlert - Brevo not config | Branch   | P1
+EMAIL-011 | Email | sendLowStockAlert - user disabled   | Branch    | P2
+EMAIL-012 | Email | sendLowStockAlert - no userId       | Branch    | P2
+EMAIL-013 | Email | sendLowStockAlert - all checks pass | Statement | P1
+
+--------------------------------------------------------------------------------
+RATE LIMITING TESTS
+--------------------------------------------------------------------------------
+RATE-001 | RateLimit | identifier - user ID header      | Branch    | P1
+RATE-002 | RateLimit | identifier - x-real-ip fallback  | Branch    | P1
+RATE-003 | RateLimit | identifier - x-forwarded-for     | Branch    | P2
+RATE-004 | RateLimit | identifier - unknown fallback    | Branch    | P2
+RATE-005 | RateLimit | auth always uses IP              | Security  | P1
+RATE-006 | RateLimit | under limit - returns null       | Branch    | P1
+RATE-007 | RateLimit | over limit - returns 429         | Branch    | P1
+RATE-008 | RateLimit | config values validation         | Statement | P2
+
+--------------------------------------------------------------------------------
+VALIDATION TESTS
+--------------------------------------------------------------------------------
+VAL-001  | Validation | loginSchema - valid input        | Statement | P1
+VAL-002  | Validation | loginSchema - invalid email      | Branch    | P1
+VAL-003  | Validation | loginSchema - missing password   | Branch    | P1
+VAL-004  | Validation | loginSchema - empty password     | Boundary  | P2
+VAL-005  | Validation | orderSchema - empty items        | Boundary  | P1
+VAL-006  | Validation | orderSchema - quantity = 0       | Boundary  | P1
+VAL-007  | Validation | orderSchema - negative quantity  | Branch    | P1
+VAL-008  | Validation | orderSchema - float quantity     | Branch    | P2
+VAL-009  | Validation | orderSchema - negative discount  | Branch    | P2
+VAL-010  | Validation | invoiceSchema - missing orderId  | Branch    | P1
+VAL-011  | Validation | invoiceSchema - invalid date     | Branch    | P1
+VAL-012  | Validation | injection attempt in email       | Security  | P1
+VAL-013  | Validation | XSS in notes field               | Security  | P1
+VAL-014  | Validation | extremely long string            | Boundary  | P2
+VAL-015  | Validation | null optional fields             | Branch    | P2
+
+--------------------------------------------------------------------------------
+RBAC TESTS
+--------------------------------------------------------------------------------
+RBAC-001 | RBAC | admin accesses products               | Branch    | P1
+RBAC-002 | RBAC | supplier with record                  | Branch    | P1
+RBAC-003 | RBAC | supplier without record               | Branch    | P1
+RBAC-004 | RBAC | client accesses orders                | Branch    | P1
+RBAC-005 | RBAC | supplier accesses orders              | Branch    | P1
+RBAC-006 | RBAC | client accesses invoices              | Branch    | P1
+RBAC-007 | RBAC | admin accesses invoices               | Branch    | P1
+RBAC-008 | RBAC | unauthenticated request               | Security  | P1
+RBAC-009 | RBAC | client accesses admin endpoint        | Security  | P1
+RBAC-010 | RBAC | supplier data isolation               | Security  | P1
+RBAC-011 | RBAC | horizontal privilege escalation       | Security  | P1
+
+--------------------------------------------------------------------------------
+DATABASE INTEGRITY TESTS
+--------------------------------------------------------------------------------
+DB-001   | DB | duplicate email                         | Constraint| P1
+DB-002   | DB | duplicate order number                  | Constraint| P1
+DB-003   | DB | duplicate invoice for order             | Constraint| P1
+DB-004   | DB | cascade delete order -> invoice         | Cascade   | P1
+DB-005   | DB | BigInt > MAX_SAFE_INTEGER               | Boundary  | P2
+DB-006   | DB | BigInt stock calculation                | Statement | P2
+DB-007   | DB | order creation atomicity gap            | Atomicity | P1
+DB-008   | DB | audit log failure isolation             | Exception | P2
+DB-009   | DB | cache invalidation failure isolation    | Exception | P2
+DB-010   | DB | DB connection failure                   | Exception | P1
+
+--------------------------------------------------------------------------------
+PAYMENT TESTS
+--------------------------------------------------------------------------------
+PAY-001  | Payment | webhook - invalid signature        | Security  | P1
+PAY-002  | Payment | webhook - missing signature        | Security  | P1
+PAY-003  | Payment | payment_intent.succeeded           | Branch    | P1
+PAY-004  | Payment | payment_intent.payment_failed      | Branch    | P1
+PAY-005  | Payment | unknown webhook event              | Branch    | P2
+PAY-006  | Payment | refund - no payment intent ID      | Branch    | P2
+PAY-007  | Payment | Stripe API unavailable             | Exception | P2
+
+TOTAL TEST CASES: 107
+
+
+================================================================================
+SECTION 14: CODE COVERAGE REQUIREMENTS
+================================================================================
+
+White box testing is only meaningful when measured against code coverage metrics.
+Below are the minimum coverage targets for this project.
+
+--------------------------------------------------------------------------------
+14.1 COVERAGE TARGETS BY MODULE
+--------------------------------------------------------------------------------
+
+MODULE                          | STATEMENT | BRANCH | FUNCTION | LINE
+--------------------------------|-----------|--------|----------|------
+utils/auth.ts                   |    100%   |  100%  |   100%   | 100%
+lib/forecasting/demand-forecast |    100%   |  100%  |   100%   | 100%
+lib/email/notifications.ts      |     95%   |  100%  |   100%   |  95%
+lib/api/rate-limit.ts           |    100%   |  100%  |   100%   | 100%
+lib/validations/                |     95%   |   95%  |   100%   |  95%
+prisma/order.ts                 |     90%   |   95%  |   100%   |  90%
+prisma/invoice.ts               |     90%   |   95%  |   100%   |  90%
+app/api/auth/login/route.ts     |    100%   |  100%  |   100%   | 100%
+app/api/orders/route.ts         |     85%   |   90%  |   100%   |  85%
+app/api/products/route.ts       |     85%   |   90%  |   100%   |  85%
+app/api/invoices/route.ts       |     85%   |   90%  |   100%   |  85%
+OVERALL PROJECT TARGET          |     85%   |   90%  |    95%   |  85%
+
+--------------------------------------------------------------------------------
+14.2 CRITICAL PATHS REQUIRING 100% COVERAGE
+--------------------------------------------------------------------------------
+
+These paths MUST have 100% branch coverage due to security/financial impact:
+
+1. JWT token verification (verifyToken function)
+   - All 5 branches must be tested
+   - Expired, invalid, malformed, client-side, and valid tokens
+
+2. Password comparison (comparePassword)
+   - Both true and false outcomes must be tested
+
+3. Stock availability check in createOrder
+   - Sufficient stock, insufficient stock, exact boundary
+
+4. Invoice total calculation with Math.max(0, ...)
+   - Positive total and negative-prevented-to-zero cases
+
+5. Rate limit identifier resolution for auth endpoints
+   - Must always use IP, never user ID
+
+6. Webhook signature verification
+   - Valid and invalid signatures
+
+--------------------------------------------------------------------------------
+14.3 COVERAGE EXCLUSIONS (DO NOT TEST)
+--------------------------------------------------------------------------------
+
+The following are excluded from coverage requirements:
+- Generated Prisma client code (node_modules/@prisma/client)
+- Next.js framework internals
+- Third-party library code (Stripe, Shippo, Brevo SDKs)
+- Database migration files
+- Seed scripts (scripts/*.ts)
+- Type definition files (*.d.ts)
+- Configuration files (next.config.js, tailwind.config.js)
+
+
+================================================================================
+SECTION 15: TOOLS & SETUP INSTRUCTIONS
+================================================================================
+
+--------------------------------------------------------------------------------
+15.1 RECOMMENDED TESTING STACK
+--------------------------------------------------------------------------------
+
+1. VITEST (Unit & Integration Testing)
+   - Fast, TypeScript-native, compatible with Next.js
+   - Install: bun add -D vitest @vitest/coverage-v8
+   - Config: vitest.config.ts
+
+2. @TESTING-LIBRARY/REACT (Component Testing)
+   - Install: bun add -D @testing-library/react @testing-library/jest-dom
+
+3. SUPERTEST or NEXT-TEST-API-ROUTE-HANDLER (API Route Testing)
+   - Install: bun add -D next-test-api-route-handler supertest
+
+4. PRISMA MOCK (@prisma/client mock)
+   - Install: bun add -D vitest-mock-extended
+   - Or use: jest-mock-extended for Prisma client mocking
+
+5. MSW (Mock Service Worker) - for mocking Stripe, Brevo, Shippo
+   - Install: bun add -D msw
+
+--------------------------------------------------------------------------------
+15.2 VITEST CONFIGURATION
+--------------------------------------------------------------------------------
+
+Create file: vitest.config.ts
+
+  import { defineConfig } from 'vitest/config'
+  import path from 'path'
+
+  export default defineConfig({
+    test: {
+      environment: 'node',
+      globals: true,
+      coverage: {
+        provider: 'v8',
+        reporter: ['text', 'html', 'lcov'],
+        exclude: [
+          'node_modules/**',
+          '.next/**',
+          'prisma/migrations/**',
+          'scripts/**',
+          '**/*.d.ts',
+          '**/*.config.*',
+        ],
+        thresholds: {
+          statements: 85,
+          branches: 90,
+          functions: 95,
+          lines: 85,
+        }
+      }
+    },
+    resolve: {
+      alias: {
+        '@': path.resolve(__dirname, '.'),
+      }
+    }
+  })
+
+--------------------------------------------------------------------------------
+15.3 PRISMA MOCK SETUP
+--------------------------------------------------------------------------------
+
+Create file: __tests__/helpers/prisma-mock.ts
+
+  import { PrismaClient } from '@prisma/client'
+  import { mockDeep, mockReset, DeepMockProxy } from 'vitest-mock-extended'
+  import { vi } from 'vitest'
+
+  vi.mock('@/prisma/client', () => ({
+    prisma: mockDeep<PrismaClient>(),
+  }))
+
+  import { prisma } from '@/prisma/client'
+
+  export const prismaMock = prisma as DeepMockProxy<PrismaClient>
+
+  beforeEach(() => {
+    mockReset(prismaMock)
+  })
+
+--------------------------------------------------------------------------------
+15.4 EXAMPLE TEST FILE STRUCTURE
+--------------------------------------------------------------------------------
+
+Recommended folder structure:
+
+  __tests__/
+  ├── unit/
+  │   ├── auth/
+  │   │   └── verifyToken.test.ts
+  │   ├── forecasting/
+  │   │   ├── calculateMovingAverage.test.ts
+  │   │   ├── analyzeTrend.test.ts
+  │   │   ├── detectAnomalies.test.ts
+  │   │   └── generateProductForecast.test.ts
+  │   ├── email/
+  │   │   ├── isLowStock.test.ts
+  │   │   └── isOutOfStock.test.ts
+  │   └── invoice/
+  │       └── generateInvoiceNumber.test.ts
+  ├── integration/
+  │   ├── api/
+  │   │   ├── auth.login.test.ts
+  │   │   ├── orders.test.ts
+  │   │   ├── products.test.ts
+  │   │   └── invoices.test.ts
+  │   └── prisma/
+  │       ├── createOrder.test.ts
+  │       └── createInvoice.test.ts
+  └── helpers/
+      ├── prisma-mock.ts
+      └── test-fixtures.ts
+
+--------------------------------------------------------------------------------
+15.5 EXAMPLE TEST IMPLEMENTATION (AUTH-005: Expired JWT)
+--------------------------------------------------------------------------------
+
+  // __tests__/unit/auth/verifyToken.test.ts
+  import { describe, it, expect } from 'vitest'
+  import jwt from 'jsonwebtoken'
+  import { verifyToken } from '@/utils/auth'
+
+  describe('verifyToken', () => {
+    it('AUTH-005: returns null for expired token', async () => {
+      // Generate a token that expires in 1ms
+      const expiredToken = jwt.sign(
+        { userId: 'test-user' },
+        process.env.JWT_SECRET || 'your_jwt_secret',
+        { expiresIn: '1ms' }
+      )
+
+      // Wait for token to expire
+      await new Promise(resolve => setTimeout(resolve, 10))
+
+      const result = verifyToken(expiredToken)
+      expect(result).toBeNull()
+    })
+
+    it('AUTH-004: returns userId for valid token', () => {
+      const token = jwt.sign(
+        { userId: 'user123' },
+        process.env.JWT_SECRET || 'your_jwt_secret',
+        { expiresIn: '1h' }
+      )
+
+      const result = verifyToken(token)
+      expect(result).toEqual({ userId: 'user123' })
+    })
+
+    it('AUTH-001: returns null for empty string', () => {
+      expect(verifyToken('')).toBeNull()
+    })
+
+    it('AUTH-002: returns null for string "null"', () => {
+      expect(verifyToken('null')).toBeNull()
+    })
+  })
+
+--------------------------------------------------------------------------------
+15.6 EXAMPLE TEST IMPLEMENTATION (FORE-018: Zero Sales Division)
+--------------------------------------------------------------------------------
+
+  // __tests__/unit/forecasting/generateProductForecast.test.ts
+  import { describe, it, expect } from 'vitest'
+
+  // Import the internal function (may need to export it for testing)
+  // If not exported, test via the public generateForecastingSummary function
+
+  describe('generateProductForecast - zero sales protection', () => {
+    it('FORE-018: daysUntilStockout is null when no sales history', () => {
+      // With no sales data, predictedDailySales = 0
+      // Division by zero must be prevented
+      const dailySales: { date: string; quantity: number }[] = []
+
+      // Expected: daysUntilStockout = null (not Infinity, not NaN, not crash)
+      // Test via the forecasting summary endpoint with a product that has no orders
+    })
+  })
+
+--------------------------------------------------------------------------------
+15.7 RUNNING THE TESTS
+--------------------------------------------------------------------------------
+
+Run all tests (single pass, no watch mode):
+  bun run vitest --run
+
+Run with coverage report:
+  bun run vitest --run --coverage
+
+Run specific test file:
+  bun run vitest --run __tests__/unit/auth/verifyToken.test.ts
+
+Run tests matching a pattern:
+  bun run vitest --run --reporter=verbose -t "AUTH"
+
+Generate HTML coverage report:
+  bun run vitest --run --coverage --reporter=html
+  (Open coverage/index.html in browser)
+
+Run only P1 (critical) tests:
+  bun run vitest --run -t "AUTH|ORD|INV|FORE|RBAC"
+
+--------------------------------------------------------------------------------
+15.8 CONTINUOUS INTEGRATION SETUP
+--------------------------------------------------------------------------------
+
+Add to your CI pipeline (GitHub Actions example):
+
+  - name: Run White Box Tests
+    run: |
+      bun install
+      bun run vitest --run --coverage
+    env:
+      DATABASE_URL: ${{ secrets.TEST_DATABASE_URL }}
+      JWT_SECRET: test-secret-for-ci
+      NODE_ENV: test
+
+  - name: Check Coverage Thresholds
+    run: |
+      # Vitest will fail if thresholds in vitest.config.ts are not met
+      echo "Coverage thresholds enforced by vitest.config.ts"
+
+================================================================================
+END OF WHITE BOX TESTING DOCUMENT
+================================================================================
+
+SUMMARY STATISTICS:
+  Total Test Cases:     107
+  P1 (Critical):         ~65
+  P2 (High):             ~30
+  P3 (Medium):            ~8
+  P4 (Low):               ~4
+
+  Modules Covered:       10
+  Coverage Target:       85% statements, 90% branches, 95% functions
+
+  Key Risk Areas Identified:
+  1. Order creation lacks database transaction (atomicity gap - DB-007)
+  2. JWT_SECRET defaults to weak value if env not set (AUTH security)
+  3. BigInt precision loss for quantities > MAX_SAFE_INTEGER (DB-005)
+  4. generateOrderNumber has race condition under high concurrency (ORD-002)
+  5. generateInvoiceNumber while-loop could theoretically run forever (INV-002)
+
+================================================================================
