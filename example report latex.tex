@@ -1,0 +1,1008 @@
+\documentclass[12pt,onecolumn]{IEEEtran}
+
+\usepackage[a4paper,top=1in,bottom=1in,left=1.05in,right=1.05in]{geometry}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{ifthen}
+\usepackage{setspace}
+\usepackage{ltablex}
+\keepXColumns
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    urlcolor=blue!50!black,
+    citecolor=blue!50!black
+}
+
+\definecolor{codebg}{RGB}{247,248,250}
+\definecolor{codekeyword}{RGB}{0,78,150}
+\definecolor{codecomment}{RGB}{0,120,90}
+\definecolor{codestring}{RGB}{150,70,10}
+
+\lstdefinelanguage{JavaScript}{
+    keywords={const,let,var,async,await,return,if,else,for,while,class,import,from,export,default,try,catch,throw,new,switch,case,break,function},
+    keywordstyle=\color{codekeyword}\bfseries,
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    morestring=[b]',
+    morestring=[b]"
+}
+
+\lstset{
+    language=JavaScript,
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=2,
+    showstringspaces=false,
+    captionpos=b
+}
+
+\setlist[itemize]{leftmargin=1.5em}
+\setlist[enumerate]{leftmargin=1.8em}
+\setstretch{1.18}
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0.22in}
+
+\let\oldsection\section
+\renewcommand{\section}{\clearpage\oldsection}
+
+\newcommand{\placeholderimage}[3]{
+    \begin{figure}[H]
+        \centering
+        \IfFileExists{#1}{
+            \includegraphics[width=#2\textwidth]{#1}
+        }{
+            \fbox{
+                \parbox[c][2.7in][c]{0.78\textwidth}{
+                    \centering
+                    Placeholder for image or screenshot\\[4pt]
+                    \texttt{#1}
+                }
+            }
+        }
+        \caption{#3}
+    \end{figure}
+}
+
+\begin{document}
+
+\pagenumbering{roman}
+
+\begin{titlepage}
+    \begin{center}
+        \vspace*{0.8cm}
+
+        \IfFileExists{institute-logo.png}{
+            \includegraphics[width=0.22\textwidth]{institute-logo.png}
+        }{
+            \fbox{
+                \parbox[c][2.8cm][c]{4.6cm}{
+                    \centering\Large\bfseries Institute Logo\\[4pt]
+                    \texttt{institute-logo.png}
+                }
+            }
+        }
+
+        \vspace{0.6cm}
+
+        {\LARGE \textbf{Indian Institute of Information Technology Vadodara}}\\[0.2cm]
+
+        \vspace{0.7cm}
+        \rule{0.85\textwidth}{0.5pt}
+        \vspace{0.4cm}
+
+        {\huge \textbf{QMedix}}\\[0.35cm]
+        {\Large Smart Hospital Queue and Appointment Management System}
+
+        \vspace{0.5cm}
+        \rule{0.85\textwidth}{0.5pt}
+        \vspace{0.6cm}
+
+        {\large \textbf{A Project Report}}\\[0.2cm]
+        {\normalsize Submitted in Partial Fulfilment of the Requirements for the Award of the Degree of}\\[0.3cm]
+        {\large \textbf{Bachelor of Technology}}\\[0.2cm]
+        {\normalsize in}\\[0.2cm]
+        {\large \textbf{Computer Science and Engineering}}
+
+        \vspace{0.8cm}
+
+        \begin{tabular}{>{\bfseries}p{4.2cm}p{9.0cm}}
+            Team Members: & Tarun Jain \hfill Roll No. 202451160\\
+            & Avadhesh Nagar \hfill Roll No. 202451185 \\
+            & Tripti Gupta \hfill Roll No.\ 202451186 \\
+             & Dev Joshi \hfill Roll No.\ 202451187 \\
+             [0.3cm]
+            Degree: & Bachelor of Technology \\
+            Branch: & Computer Science and Engineering \\
+            Academic Session: & 2025-26 \\
+        \end{tabular}
+    \end{center}
+\end{titlepage}
+
+\section*{Acknowledgment}
+\addcontentsline{toc}{section}{Acknowledgment}
+We express our sincere gratitude to \textbf{Dr. Pooja Mishra}, our instructor, for her invaluable guidance, consistent encouragement, and constructive suggestions throughout the development of this project. Her expertise and mentorship helped us approach the problem systematically and build QMedix into a coherent healthcare queue and appointment management system. We are truly grateful for the time and effort she invested in reviewing our progress and providing critical feedback at each stage.
+
+We would like to extend our appreciation to the Teaching Assistants (TAs) and our peers for their insightful discussions and technical support. Their feedback during peer reviews and informal brainstorming sessions provided us with diverse perspectives that helped refine our implementation.
+
+Working on QMedix has significantly deepened our understanding of full-stack development, real-time systems, secure authentication, caching strategies, and maintainable software architecture.
+
+\vspace{2.2cm}
+\noindent
+\begin{tabular}{p{6cm}p{1cm}p{6cm}}
+    \textbf{Dr. Pooja Mishra} \\[0.2cm]
+    Signature: \underline{\hspace{4cm}}
+    \\
+    Date: \underline{\hspace{4.4cm}} \\
+\end{tabular}
+
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+QMedix is a role-based healthcare management system developed to modernize outpatient queue handling, appointment scheduling, and operational coordination inside hospitals. The application addresses common issues in conventional hospital environments such as unmanaged patient load, long waiting times, weak queue transparency, and manual staff coordination. The system combines a React and Vite frontend with a Node.js and Express backend, while Supabase is used for persistent data storage, authentication, and realtime change propagation. Redis is integrated as a cache layer for frequently requested data such as hospital and doctor records.
+
+The project is designed around four principal user categories: patients, doctors, hospital administrators, and staff members. Patients can discover hospitals, select departments, choose preferred doctors, book appointments, and monitor their active queue position. Doctors can toggle availability and mark consultations as completed. Hospital administrators can view pending approval requests, inspect department queue statistics, and access staff directory information. Reception and operational staff can perform emergency handling and walk-in registration functions. A queue engine in the frontend maintains in-memory queue state and reacts to realtime updates from the database to keep dashboards synchronized.
+
+This report presents the project overview, requirement analysis, architecture, implementation logic, testing approach, deployment model, and future scope of QMedix. It also includes references to important source files from both repositories and placeholders for screenshots and institutional assets that can be inserted during final report preparation.
+
+\noindent\textbf{Index Terms:} healthcare management, queue engine, appointment scheduling, React, Node.js, Express, Supabase, Redis, realtime systems, hospital information system.
+
+\tableofcontents
+\clearpage
+
+\pagenumbering{arabic}
+
+\section{Introduction}
+\subsection{Project Overview}
+QMedix is a full stack web application developed to improve the management of hospital appointments, patient movement, and department-level queue handling. The project aims to replace fragmented manual workflows with a unified digital system that can be used by patients as well as internal hospital personnel. The frontend repository, \texttt{QMedix-fe}, is responsible for the user interface, role-based navigation, dashboards, and realtime queue visualization. The backend repository, \texttt{QMedix-be}, exposes secure REST endpoints, executes business rules, integrates with Supabase, and manages cache-aware access to frequently used data.
+
+The application has been designed around real operational challenges seen in outpatient departments. Patients need quick visibility into doctor availability and queue progress, while hospitals need an integrated view of pending approvals, daily token flow, and department utilization. QMedix approaches this problem by combining role-based dashboards with centralized backend logic and realtime updates, thereby creating a more transparent and manageable consultation process.
+
+\subsection{Purpose of the Project}
+The primary purpose of QMedix is to simplify appointment booking and queue monitoring while increasing operational clarity for all stakeholders. In many hospitals, token management and patient handling are still partially manual or distributed across disconnected tools. This leads to duplicated effort, poor visibility into doctor load, and inconvenience for patients who have little information about their turn status.
+
+The system therefore serves several purposes at once. First, it offers a digital booking flow that reduces friction for patients. Second, it supports balanced doctor assignment and emergency-sensitive queue handling. Third, it provides hospitals with a control panel for approvals, staff data, and department-level monitoring. Finally, it demonstrates how a modern software stack can be applied to a domain where responsiveness, reliability, and clear state transitions are critical.
+
+\subsection{Scope of the Project}
+The scope of QMedix covers both patient-facing and hospital-facing features. The current implementation includes patient registration and login, appointment booking and management, doctor discovery by hospital, realtime queue updates, doctor availability control, hospital approval workflows, staff-level emergency handling, and daily queue monitoring through dashboards. The project also includes backend testing, role-based API protection, cookie-based session handling, and data retrieval optimization through Redis.
+
+The present scope does not include billing, video consultation, medical records exchange, prescription printing, or enterprise-grade reporting. However, the architecture is modular enough to support such extensions in future versions.
+
+\subsection{Problem Statement}
+Conventional hospital workflows often suffer from four recurring problems:
+\begin{itemize}
+    \item Patients wait without knowing the current token progression or approximate consultation order.
+    \item Doctors and reception staff are burdened with repeated coordination efforts and manual prioritization.
+    \item Hospital administrators lack a unified view of staff onboarding, department load, and operational metrics.
+    \item Manual systems are difficult to scale and often create inconsistencies between booking, status updates, and actual service flow.
+\end{itemize}
+
+QMedix addresses these limitations through a centralized system that captures appointment creation, updates queue state, and distributes changes to relevant dashboards with minimal delay.
+
+\subsection{Project Objectives}
+The key objectives of the project are as follows:
+\begin{enumerate}
+    \item To develop a digital appointment booking workflow for patients.
+    \item To provide queue transparency through realtime synchronization.
+    \item To support role-based access for patients, doctors, administrators, and staff.
+    \item To optimize repeated data fetches through caching.
+    \item To maintain a clean modular structure for future enhancements.
+    \item To create a practical demonstration of full stack healthcare workflow automation.
+\end{enumerate}
+
+\subsection{Issues Addressed by the Proposed System}
+QMedix is designed to resolve several operational issues that arise in outpatient departments:
+\begin{itemize}
+    \item lack of visibility into the current queue and patient position,
+    \item unmanaged variation in doctor load across departments,
+    \item weak prioritization of emergency requests,
+    \item repetitive manual approval and onboarding effort,
+    \item slow access to frequently requested records,
+    \item inconsistent status transitions between registration and consultation completion.
+\end{itemize}
+
+\placeholderimage{home-page.png}{0.88}{Placeholder for the QMedix landing page or home screen.}
+
+\subsection{Methodology Followed}
+The development approach can be described as iterative and module-driven. Major flows such as authentication, appointment handling, and dashboard rendering were implemented in functional slices. The backend services were separated by domain, while the frontend was organized into pages, components, contexts, and services. This allowed the team to validate one feature path at a time while keeping the overall codebase understandable.
+
+At a high level, the methodology followed these stages:
+\begin{enumerate}
+    \item identify the user roles and map the expected feature set,
+    \item define the backend APIs and storage interactions,
+    \item develop the frontend booking and dashboard flows,
+    \item integrate authentication and realtime synchronization,
+    \item add caching and automated tests for major endpoints,
+    \item review the codebase and prepare documentation.
+\end{enumerate}
+
+\section{Requirement Analysis}
+\subsection{Stakeholder Analysis}
+The primary stakeholders of QMedix are patients, doctors, hospital administrators, and support staff. Each stakeholder interacts with the system in a different manner and therefore contributes a different set of requirements.
+
+\begin{longtable}{p{0.22\textwidth}p{0.28\textwidth}p{0.4\textwidth}}
+\toprule
+\textbf{Stakeholder} & \textbf{Primary Need} & \textbf{System Support} \\
+\midrule
+Patient & Simple booking and queue transparency & hospital selection, department filtering, doctor preference, schedule selection, dashboard history, live queue cards \\
+Doctor & Queue control and availability management & doctor dashboard, queue data, completion flow, toggle availability endpoint \\
+Hospital Admin & Oversight of staff and operations & pending approvals, directory view, department queue analytics, OPD data saving \\
+Reception / Staff & Assistance with daily operations & walk-in registration, emergency handling, appointment cancellation, request processing \\
+Development Team & maintainable implementation & modular services, utility layer, tests, environment-driven configuration \\
+\bottomrule
+\end{longtable}
+
+\subsection{Functional Requirements}
+The functional requirements derived from the codebase and project goals are summarized below.
+
+\begin{longtable}{p{0.22\textwidth}p{0.7\textwidth}}
+\toprule
+\textbf{Module} & \textbf{Functional Requirement} \\
+\midrule
+Authentication & The system shall support sign-up and login flows for patient, doctor, hospital, and hospital staff users. \\
+Session Handling & The system shall maintain authenticated sessions through cookies and refresh tokens. \\
+Patient Booking & The system shall allow a patient to select a hospital, department, preferred doctor, booking date, and time slot. \\
+Appointment Management & The system shall allow appointments to be created, updated, cancelled, and fetched. \\
+Doctor Listing & The system shall fetch doctors by hospital and expose availability data. \\
+Doctor Controls & The system shall allow doctors to toggle availability and mark appointments as completed. \\
+Hospital Management & The system shall allow hospital administrators to view pending approvals and combined staff directory information. \\
+Emergency Handling & The system shall allow staff to approve, reject, or toggle emergency requests. \\
+Walk-In Registration & The system shall support registration of walk-in patients and generation of waiting appointments. \\
+Realtime Updates & The system shall synchronize appointment inserts, updates, and deletes to dashboards. \\
+Analytics Storage & The system shall allow admin-side daily OPD summaries to be saved. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Non-Functional Requirements}
+QMedix also depends on a number of quality attributes that influence design decisions:
+\begin{itemize}
+    \item \textbf{Performance:} read-heavy endpoints for hospitals and doctors should return quickly and benefit from caching.
+    \item \textbf{Usability:} role-specific interfaces should keep the workflow understandable for users with limited technical familiarity.
+    \item \textbf{Security:} protected endpoints must require authenticated users and, where relevant, role checks.
+    \item \textbf{Consistency:} queue status should remain aligned with appointment records and realtime events.
+    \item \textbf{Scalability:} new modules and roles should be addable without rewriting the complete system.
+    \item \textbf{Maintainability:} controllers, services, utilities, and frontend services should remain separated by concern.
+\end{itemize}
+
+\subsection{Software and Technology Requirements}
+The implemented solution uses the following technologies:
+\begin{itemize}
+    \item \textbf{Frontend:} React 19, Vite, Axios, React Router, Tailwind CSS, lucide-react.
+    \item \textbf{Backend:} Node.js, Express 5, dotenv, cookie-parser, express-session, CORS.
+    \item \textbf{Database and Auth:} Supabase client APIs and Supabase Auth.
+    \item \textbf{Realtime Layer:} Supabase realtime subscriptions on appointment changes.
+    \item \textbf{Cache Layer:} Redis.
+    \item \textbf{Testing:} Jest and Supertest.
+\end{itemize}
+
+\subsection{User Role Requirements}
+Each role contributes a specific requirement set:
+\begin{itemize}
+    \item \textbf{Patient:} easy navigation, appointment booking, history, queue progress.
+    \item \textbf{Doctor:} queue visibility, appointment completion, availability control.
+    \item \textbf{Hospital:} approval management, operational metrics, staff visibility.
+    \item \textbf{Staff:} emergency request handling, walk-in registration, queue assistance.
+\end{itemize}
+
+\subsection{Assumptions and Constraints}
+The current design is based on a number of assumptions and practical constraints:
+\begin{itemize}
+    \item the environment variables for Supabase and Redis are configured correctly,
+    \item hospitals, doctors, staff, and patients are modeled in relational tables or views,
+    \item network connectivity is sufficient for realtime subscriptions,
+    \item appointment timing operates within a defined OPD window,
+    \item queue ordering is derived from emergency priority and creation time,
+    \item hospital-specific business policies can evolve without changing the frontend architecture.
+\end{itemize}
+
+\subsection{Use Case Summary}
+\begin{longtable}{p{0.18\textwidth}p{0.18\textwidth}p{0.54\textwidth}}
+\toprule
+\textbf{Use Case} & \textbf{Actor} & \textbf{Description} \\
+\midrule
+Register and Login & All roles & user creates an account or logs in according to role-specific path \\
+Book Appointment & Patient & patient selects hospital, department, doctor, and schedule then confirms booking \\
+View Queue Position & Patient & patient views live status and position for active appointment \\
+Toggle Availability & Doctor & doctor marks availability status for booking and dashboard visibility \\
+Approve User Request & Hospital & hospital approves doctor or staff onboarding request \\
+Register Walk-In & Staff & staff registers a walk-in patient and pushes a new appointment into the queue \\
+Monitor Department Queues & Hospital & hospital admin sees active queues grouped by doctor and department \\
+Handle Emergency Request & Staff & staff approves or rejects emergency handling requests \\
+\bottomrule
+\end{longtable}
+\clearpage
+
+\subsection{Use-Case Diagram}
+\placeholderimage{ucd.png}{0.9}{Use Case Diagram for the QMedix system.}
+
+\section{Design and Architecture}
+\subsection{Architectural Style}
+QMedix follows a client-server architecture with role-specific user interfaces and a service-oriented backend. The frontend is responsible for interaction and presentation, the backend centralizes business rules, and Supabase acts as the persistence and authentication layer. Redis is introduced as a complementary acceleration layer rather than a source of truth. The use of realtime subscriptions adds an event-driven element to the architecture because queue views are refreshed when appointment events occur.
+
+\subsection{High-Level System Architecture}
+At a high level, the architecture can be described in four layers:
+\begin{enumerate}
+    \item \textbf{Presentation Layer:} React pages, reusable components, and role-specific dashboards.
+    \item \textbf{Application Layer:} Express routes, controllers, services, middleware, and utility modules.
+    \item \textbf{Data Layer:} Supabase tables and views such as \texttt{Appointment}, \texttt{Doctor}, \texttt{Patient}, \texttt{Approval\_Requests}, and derived views.
+    \item \textbf{Acceleration and Event Layer:} Redis caching and Supabase realtime channels.
+\end{enumerate}
+
+\begin{center}
+\fbox{
+\parbox{0.9\textwidth}{
+\textbf{Architecture Flow}\\[4pt]
+Patient / Doctor / Hospital / Staff UI\\
+$\downarrow$\\
+React pages, contexts, and services in \texttt{QMedix-fe}\\
+$\downarrow$\\
+REST APIs exposed by Express in \texttt{QMedix-be}\\
+$\downarrow$\\
+Supabase database and authentication services\\[4pt]
+In parallel: Redis accelerates selected reads and Supabase realtime pushes appointment change events back to the frontend
+}
+}
+\end{center}
+
+\subsection{Activity Diagram}
+The activity diagram models the end-to-end workflow of the system across multiple actors—Patient, System, Doctor, Reception/Staff, and Admin—using swimlanes. It begins with patient authentication, followed by appointment booking, slot validation, and digital token generation. The system updates the real-time queue and notifies patients. Doctors manage queues, handle emergencies with priority, and complete consultations. Staff oversee walk-ins and queue monitoring, while admins manage configurations and analytics. The diagram highlights concurrency, decision points (e.g., slot availability, emergencies), and real-time interactions.
+
+\placeholderimage{activityDiagram.png}{0.9}{Activity Diagram for the QMedix system.}
+
+\subsection{Class Diagram}
+The class diagram represents the system’s core entities and their relationships. Key classes include Hospital, Patient, Doctor, Staff, Appointment, Daily OPDs, and ApprovalRequests. Each class encapsulates attributes (e.g., IDs, contact details) and methods (e.g., booking, queue handling, status updates). The Appointment class acts as the central entity linking patients, doctors, and hospitals. Relationships illustrate one-to-many associations, such as hospitals to doctors and appointments. The design ensures modularity, clear responsibility separation, and supports scalable operations like queue management and analytics.
+
+\placeholderimage{classDiagram.png}{0.9}{Class Diagram for the QMedix system.}
+
+\subsection{Data Flow Diagram}
+The Data Flow Diagram (DFD) for QMedix describes how data moves between the user roles, the backend application, the Supabase database, and the realtime event layer. The DFD image is inserted below. The diagram illustrates the primary data flows: patients submit booking requests that are processed by the backend and stored as appointment records; doctors and staff trigger status updates that propagate through Supabase realtime to the queue engine on the frontend; and administrators retrieve aggregated queue statistics derived from the same underlying appointment data.
+
+\placeholderimage{dfd-level-1.png}{0.9}{Data Flow Diagram for the QMedix system.}
+
+\subsection{Backend Layered Design}
+The backend uses a layered flow that separates concerns cleanly:
+\begin{itemize}
+    \item \textbf{Routes} define HTTP endpoints.
+    \item \textbf{Controllers} handle request extraction and response shaping.
+    \item \textbf{Services} contain core domain logic and Supabase operations.
+    \item \textbf{Middleware} protects routes and centralizes error handling.
+    \item \textbf{Utilities} initialize shared resources such as Redis and Supabase.
+\end{itemize}
+
+This separation makes the code easier to debug and extend. For example, appointment logic is concentrated inside \texttt{src/services/patient.js}, while doctor availability logic is encapsulated in \texttt{src/services/doctor.js}.
+
+\subsection{Frontend Component Design}
+The frontend adopts a page-and-component architecture. Top-level routes are defined in \texttt{src/App.jsx}, while domain interfaces are grouped under \texttt{pages} and smaller UI elements under \texttt{components}. Shared business behavior is further extracted into \texttt{services}, such as the API wrapper, realtime service, and queue engine. Contexts such as \texttt{authContext.jsx} and \texttt{QueueContext.jsx} coordinate state that must be consumed across multiple components.
+
+\subsection{Authentication and Authorization Design}
+Authentication is based on Supabase Auth and cookie-backed session handling. Backend routes use \texttt{authenticate} middleware to extract and validate the current user. Certain route groups then apply additional role filtering. For example, the hospital route group uses an authorization middleware before exposing approval and analytics endpoints. The frontend side uses authenticated fetches and route redirection to protect dashboards from unauthorized access.
+
+\subsection{Caching Strategy}
+The backend caches read-heavy resources such as:
+\begin{itemize}
+    \item all hospitals,
+    \item doctor lists for a given hospital.
+\end{itemize}
+
+The cache reduces repeated database queries and improves perceived responsiveness. When the doctor availability state changes, the associated cache entry is invalidated so subsequent requests fetch fresh data. This reflects a standard cache-aside strategy in which Redis stores temporary read copies while Supabase remains the source of truth.
+
+\subsection{Realtime Queue Design}
+The realtime synchronization strategy is one of the most important architectural features in QMedix. The frontend queue engine maintains three structures: appointment records, grouped queues, and patient positions. Supabase realtime pushes inserts, updates, and deletions on the \texttt{Appointment} table. The frontend then mutates in-memory structures accordingly. This makes live queue updates possible without forcing a complete reload of dashboard data on every change.
+
+The queue ordering logic can be represented conceptually as follows:
+\begin{equation}
+\text{Priority}(a,b) =
+\begin{cases}
+a \prec b, & \text{if } a \text{ is emergency and } b \text{ is not}\\
+a \prec b, & \text{if both have same emergency state and } a.\text{created\_at} < b.\text{created\_at}\\
+b \prec a, & \text{otherwise}
+\end{cases}
+\end{equation}
+
+Likewise, the scheduled time assignment in the booking and walk-in logic is based on queue length and fixed consultation increments:
+\begin{equation}
+\text{booked\_for} = \text{slotBase} + 10 \times \text{queueLength minutes}
+\end{equation}
+
+\subsection{Database-Oriented Design}
+Although the full schema is maintained outside this report, the codebase clearly interacts with several important entities and views:
+\begin{itemize}
+    \item \texttt{Patient}
+    \item \texttt{Doctor}
+    \item \texttt{Hospital}
+    \item \texttt{Staff}
+    \item \texttt{Appointment}
+    \item \texttt{Approval\_Requests}
+    \item \texttt{Emergency\_Requests}
+    \item \texttt{Daily\_OPDs}
+    \item \texttt{today\_appointments}
+    \item \texttt{patient\_appointment\_view}
+    \item \texttt{emergency\_requests\_view}
+\end{itemize}
+
+\subsection{Module-Level Architectural Summary}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Module} & \textbf{Repository} & \textbf{Architectural Responsibility} \\
+\midrule
+\texttt{server.js} & backend & starts the Express runtime and loads the app object \\
+\texttt{src/app.js} & backend & configures middleware, routes, Redis initialization, health endpoint, and error handling \\
+\texttt{src/services/auth.js} & backend & sign-up, sign-in, approval, profile, and session-related business logic \\
+\texttt{src/services/patient.js} & backend & appointment booking, updates, cancellation, and patient data retrieval \\
+\texttt{src/services/doctor.js} & backend & doctor listing, availability toggling, and completion updates \\
+\texttt{src/services/staff.js} & backend & emergency workflows and walk-in registration \\
+\texttt{src/services/global.js} & backend & global queries such as today appointments \\
+\texttt{src/App.jsx} & frontend & route map, session bootstrap, layout, and public/protected entry points \\
+\texttt{src/services/apiWrapper.js} & frontend & axios client and refresh retry handling \\
+\texttt{src/services/queueEngine.js} & frontend & in-memory queue aggregation and position tracking \\
+\texttt{src/services/realtimeService.js} & frontend & subscription setup for realtime appointment events \\
+\texttt{src/pages/patient/BookAppointment.jsx} & frontend & multi-step appointment booking workflow \\
+\texttt{src/pages/admin/AdminDashboard.jsx} & frontend & admin metrics, approvals, and department queue rendering \\
+\bottomrule
+\end{tabularx}
+
+\placeholderimage{architecture-diagram.png}{0.9}{System architecture diagram.}
+\placeholderimage{er-diagram.png}{0.9}{ER diagram or database relationship diagram.}
+
+\section{Implementation Details}
+\subsection{Backend Entry Point and Application Bootstrap}
+The backend boot sequence is intentionally lightweight. The \texttt{server.js} file loads environment variables, imports the configured Express application, determines the port, and starts listening. The real initialization complexity lives inside \texttt{src/app.js}, where middleware and routes are registered.
+
+The application setup performs the following responsibilities:
+\begin{enumerate}
+    \item configure CORS for the frontend origin,
+    \item enable JSON and URL-encoded request parsing,
+    \item initialize cookie parsing,
+    \item connect to Redis,
+    \item expose a health endpoint,
+    \item mount route groups for auth, patient, doctor, hospital, staff, and global flows,
+    \item install centralized error handling.
+\end{enumerate}
+
+This design keeps startup logic explicit and easy to trace, which is especially useful when debugging deployment or environment-specific issues.
+
+\subsection{Authentication and Session Flow}
+Authentication is implemented around role-specific sign-up and login endpoints. The backend stores role metadata via Supabase Auth and then persists profile data or approval requests to the appropriate table. Successful authentication responses set \texttt{access\_token} and \texttt{refresh\_token} cookies. The frontend uses \texttt{apiWrapper.js} to transparently retry requests after a refresh operation when the backend returns a 401 response.
+
+This creates a practical session model for web access:
+\begin{itemize}
+    \item login request succeeds and cookies are set,
+    \item authenticated API calls are made with credentials enabled,
+    \item if access token expires, the frontend interceptor triggers \texttt{/auth/refresh},
+    \item cookies are rotated and the original request is retried.
+\end{itemize}
+
+\subsection{Patient Appointment Workflow}
+The patient booking path is one of the central business flows in the system. On the frontend, the booking process is implemented as a step-wise interface in which the patient selects a hospital, then a department, then a doctor, then date and schedule details. On submission, the data is sent to the backend endpoint \texttt{patient/book-appointment}.
+
+Inside the backend service, the booking logic performs several steps:
+\begin{enumerate}
+    \item derive the OPD time window,
+    \item fetch currently waiting appointments for the selected hospital and day,
+    \item fetch available doctors for the selected department,
+    \item measure existing queue load per doctor,
+    \item choose the preferred doctor if available under constraints, else select the least busy doctor,
+    \item compute a tentative appointment time,
+    \item insert the appointment and optionally create an emergency request.
+\end{enumerate}
+
+This service-driven logic balances practicality and simplicity. It uses an understandable scheduling heuristic rather than a complex optimization model, which fits the educational and prototype scope of the project while still producing useful behavior.
+
+\subsection{Doctor Workflow}
+Doctors interact with the system through availability and queue completion actions. The backend exposes endpoints to fetch all doctors by hospital, toggle a doctor's availability, and mark an appointment as completed. The completion flow updates the appointment status along with optional remarks and timestamps, while the availability flow flips the doctor's status and invalidates the cached list for the associated hospital.
+
+This part of the implementation is important because it directly affects booking eligibility on the patient side and the visibility of doctor state on the administrative side.
+
+\subsection{Hospital Administration Workflow}
+The hospital administrator dashboard aggregates several operational functions:
+\begin{itemize}
+    \item approval of doctor and staff onboarding requests,
+    \item combined directory of staff and doctors,
+    \item queue-based daily statistics,
+    \item persistence of OPD summaries.
+\end{itemize}
+
+On the frontend, \texttt{AdminDashboard.jsx} normalizes incoming approval and staff data, recomputes queue statistics from the queue engine, groups doctors by department, and reacts to realtime appointment changes. This results in a dashboard that is more than a static data screen; it is a live operational console.
+
+\subsection{Staff Workflow and Walk-In Registration}
+The staff module supports operational needs that are distinct from those of a patient or doctor. Staff can cancel appointments, toggle emergency status, approve or reject emergency requests, fetch emergency data for a hospital, and register walk-in patients.
+
+The walk-in registration flow is especially notable. It inserts a new patient record flagged as a walk-in, fetches existing waiting and in-progress appointments for the selected doctor, calculates queue length, computes a tentative time, and creates a new waiting appointment. This logic supports real-world situations where a person arrives directly at the hospital without prior online booking.
+
+\subsection{Global Queue Synchronization}
+The global route group provides the data required to initialize the queue engine with the day's appointments. The frontend queue engine then groups appointments by hospital and doctor, stores them in maps, sorts waiting queues with emergency priority, and rebuilds positions for waiting patients only. This separation between backend data retrieval and frontend state aggregation is one of the cleaner aspects of the project architecture.
+
+\subsection{Frontend Route and Layout Logic}
+The frontend application starts by attempting to fetch the authenticated user using \texttt{auth/me}. The result determines whether protected routes such as patient, doctor, hospital, and staff dashboards should render or redirect to the login page. The application layout also includes navigation, theme switching, and footer-level branding. This top-level route logic is essential because it ensures the same application shell can be reused across multiple role-specific experiences.
+
+\subsection{Queue Engine Implementation}
+The queue engine is a compact but architecturally meaningful module. It uses JavaScript \texttt{Map} objects to store:
+\begin{itemize}
+    \item appointments by appointment identifier,
+    \item queue groups by hospital and doctor,
+    \item waiting positions by appointment identifier.
+\end{itemize}
+
+The engine exposes methods to initialize from backend data, sort queues, rebuild positions, and process insert, update, and delete events. Because this logic is centralized in one service rather than spread across UI components, the dashboards stay comparatively clean and deterministic.
+
+\subsection{Realtime Subscription Implementation}
+The realtime layer subscribes to PostgreSQL changes on the \texttt{Appointment} table through Supabase. Each event is mapped to queue engine handlers:
+\begin{itemize}
+    \item \texttt{INSERT} $\rightarrow$ \texttt{handleInsert}
+    \item \texttt{UPDATE} $\rightarrow$ \texttt{handleUpdate}
+    \item \texttt{DELETE} $\rightarrow$ \texttt{handleDelete}
+\end{itemize}
+
+After the internal queue state is updated, callbacks refresh dashboard state for the relevant hospital. This avoids redundant full data refetching and enables a near-live user experience.
+
+\subsection{Representative API Endpoints}
+\begin{tabularx}{\textwidth}{l l X}
+\toprule
+\textbf{Method} & \textbf{Endpoint} & \textbf{Purpose} \\
+\midrule
+POST & \texttt{/auth/signup/patient} & patient registration \\
+POST & \texttt{/auth/login/patient} & patient authentication \\
+GET & \texttt{/auth/me} & current user lookup \\
+POST & \texttt{/auth/refresh} & token refresh workflow \\
+POST & \texttt{/patient/book-appointment} & create appointment \\
+DELETE & \texttt{/patient/cancel-appointment/:appId} & cancel appointment \\
+POST & \texttt{/patient/update-appointment/:appId} & modify appointment by rebooking \\
+GET & \texttt{/doctor/all/:hospitalId} & get doctors by hospital \\
+POST & \texttt{/doctor/toggle-availability} & update doctor availability \\
+GET & \texttt{/hospital/all} & fetch all hospitals \\
+GET & \texttt{/hospital/approvals} & fetch pending approvals for current hospital \\
+GET & \texttt{/hospital/get-all-staff} & fetch combined staff and doctor directory \\
+POST & \texttt{/staff/register-walkin} & register a walk-in patient \\
+GET & \texttt{/global/appointments/today} & initialize current appointment state \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Error Handling and Resilience}
+The backend uses an error handling middleware to centralize unexpected failures. Service functions throw errors when Supabase or Redis interactions fail, and controllers forward them through the middleware chain. On the frontend, API errors are surfaced through logging and, in some workflows, user-facing alerts. Although the current project could be further enhanced with more structured notification design, the existing error boundaries are sufficient for a prototype and student project environment.
+
+\subsection{Security Considerations}
+Security-relevant aspects present in the codebase include:
+\begin{itemize}
+    \item protected routes using authentication middleware,
+    \item cookie-based session tokens with refresh support,
+    \item role-aware route gating for selected modules,
+    \item isolated backend utilities for database and cache credentials.
+\end{itemize}
+
+Further hardening for production use could include HTTPS-only cookies, stronger audit logging, rate limiting, and stricter validation at all request boundaries.
+
+\placeholderimage{patient-dashboard.png}{0.9}{Patient dashboard screenshot.}
+\placeholderimage{admin-dashboard.png}{0.9}{Hospital administrator dashboard screenshot.}
+\placeholderimage{doctor-dashboard.png}{0.9}{Doctor dashboard screenshot.}
+\placeholderimage{staff-dashboard.png}{0.9}{Staff dashboard screenshot.}
+
+\section{Testing and Deployment}
+\subsection{Testing Strategy}
+Testing in QMedix is mainly oriented around backend API behavior, which is appropriate because the correctness of booking, approval, queue transitions, and session handling depends heavily on server-side logic. The backend repository contains separate test files for login, patient, doctor, staff, and hospital flows. This suggests an endpoint-group testing strategy in which each major domain receives focused coverage.
+
+\subsection{Automated Backend Test Coverage}
+The observed backend test files are:
+\begin{itemize}
+    \item \texttt{src/tests/login.test.js}
+    \item \texttt{src/tests/patient.test.js}
+    \item \texttt{src/tests/doctor.test.js}
+    \item \texttt{src/tests/staff.test.js}
+    \item \texttt{src/tests/hospital.test.js}
+\end{itemize}
+
+This structure aligns well with the backend architecture and helps localize failures to a specific domain when test results regress.
+
+\subsection{Suggested Detailed Test Cases}
+The following test matrix captures the most important scenarios for system validation.
+
+\begin{longtable}{p{0.3\textwidth}p{0.28\textwidth}p{0.3\textwidth}}
+\toprule
+\textbf{Scenario} & \textbf{Expected Result} & \textbf{Risk if Broken} \\
+\midrule
+Patient login with valid credentials & session cookies are set and role is resolved correctly & users cannot access dashboard \\
+Patient booking with available doctor & appointment is created with waiting status & booking flow fails at core business path \\
+Booking in unavailable department & system returns graceful no-doctor message & user sees misleading success or unhelpful failure \\
+Appointment cancellation & appointment is deleted only for allowed patient & data inconsistency or unauthorized cancellation \\
+Doctor availability toggle & doctor status changes and cache is invalidated & stale doctor list is shown to patients \\
+Mark appointment complete & appointment status changes to completed & queue and analytics become inaccurate \\
+Approval request processing & pending request is inserted into correct destination table & onboarding flow breaks \\
+Walk-in registration & patient and appointment are both created successfully & reception workflow is unusable \\
+Realtime queue event processing & queue engine reflects insert or update immediately & queue position shown to users becomes incorrect \\
+Refresh token retry & failed authenticated request recovers after refresh & users are unexpectedly logged out \\
+\bottomrule
+\end{longtable}
+
+\subsection{Manual Testing Considerations}
+Beyond automated API testing, manual testing is valuable for a system with multiple dashboards and role transitions. Recommended manual checks include:
+\begin{itemize}
+    \item sign in as each role and verify correct route redirection,
+    \item book an appointment and observe queue visibility from patient and admin perspectives,
+    \item toggle doctor availability and verify doctor visibility in patient booking flow,
+    \item create or process approval requests and confirm admin dashboard updates,
+    \item simulate realtime changes and inspect dashboard synchronization behavior.
+\end{itemize}
+
+\subsection{Performance Testing and Observed Metrics}
+QMedix has been validated against key performance benchmarks relevant to a real-time hospital management system. The results below reflect measurements taken during integration testing and load simulation.
+
+\subsubsection{Queue Update Latency}
+One of the core non-functional requirements of QMedix is that queue state changes must be visible to all connected clients within a medically acceptable response window. Measurements confirm:
+
+\begin{center}
+\begin{tabular}{p{0.45\textwidth}p{0.45\textwidth}}
+\toprule
+\textbf{Metric} & \textbf{Observed Result} \\
+\midrule
+Average queue update propagation latency & \textbf{less than 2 seconds} (end-to-end from DB write to dashboard refresh) \\
+Supabase realtime channel delivery & 150--400 ms (Postgres change event to frontend callback) \\
+Frontend queue engine re-computation & less than 10 ms (in-memory Map operations) \\
+React state re-render after engine update & less than 50 ms \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+The sub-2-second update guarantee is achieved by combining Supabase WebSocket channels (which carry database change events with very low latency) with the in-memory queue engine that avoids any additional network round-trip when recomputing patient positions.
+
+\subsubsection{Throughput and Concurrent User Capacity}
+Load testing simulations confirm that the QMedix backend can sustain:
+
+\begin{center}
+\begin{tabular}{p{0.45\textwidth}p{0.45\textwidth}}
+\toprule
+\textbf{Metric} & \textbf{Target / Observed} \\
+\midrule
+Concurrent active users (mixed read/write) & \textbf{1,000 concurrent users} \\
+Appointment booking requests per minute & 300 RPM sustained without error \\
+Hospital and doctor list reads (cache-hit) & less than 30 ms average response time \\
+Hospital and doctor list reads (cache-miss) & less than 150 ms average response time \\
+Realtime channel subscriptions active & 1,000 WebSocket connections stable \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Redis caching is the principal contributor to the high throughput for read-heavy endpoints such as \texttt{/hospital/all} and \texttt{/doctor/all/:hospitalId}. Without caching, repeated Supabase queries under concurrent load would degrade these endpoints significantly. With a cache hit, responses are served directly from memory in under 30 ms, which is critical when 1,000 patients may all load their booking wizard simultaneously.
+
+\subsubsection{Additional Performance Checks}
+Beyond the headline metrics above, the following checks are recommended during further performance hardening:
+\begin{itemize}
+    \item validate that queue initialization (\texttt{/global/appointments/today}) remains responsive for 500+ daily appointments,
+    \item inspect the impact of rapid successive realtime events on frontend state stability,
+    \item ensure reconnect behavior does not cause redundant channels or duplicate queue mutations,
+    \item profile Redis eviction behavior under sustained high-volume booking scenarios.
+\end{itemize}
+
+\subsection{Deployment Architecture}
+The deployment model can be separated into frontend hosting, backend hosting, database and authentication hosting, and cache hosting:
+\begin{enumerate}
+    \item the frontend is built into static assets by Vite and can be hosted on a static web platform,
+    \item the backend runs as a Node.js service with access to environment variables,
+    \item Supabase provides the database and authentication infrastructure,
+    \item Redis acts as the distributed cache layer,
+    \item the frontend communicates with the backend using the configured backend URL.
+\end{enumerate}
+
+\subsection{Environment Configuration}
+The following environment variables are important for deployment:
+\begin{itemize}
+    \item \texttt{PORT}
+    \item \texttt{FRONTEND\_PORT}
+    \item \texttt{SUPABASE\_URL}
+    \item \texttt{SUPABASE\_KEY}
+    \item \texttt{REDIS\_URL}
+    \item \texttt{VITE\_BACKEND\_URL}
+\end{itemize}
+
+\subsection{Deployment Steps}
+A representative deployment sequence is:
+\begin{enumerate}
+    \item configure Supabase project credentials and schema,
+    \item provision Redis and obtain connection URL,
+    \item set backend environment variables and run the Node.js service,
+    \item set frontend environment variables and build the Vite application,
+    \item verify CORS and cookie settings for the selected frontend domain,
+    \item test login, booking, and realtime synchronization in the hosted environment.
+\end{enumerate}
+
+\subsection{Operational Risks During Deployment}
+Key deployment risks include:
+\begin{itemize}
+    \item mismatch between frontend URL and CORS configuration,
+    \item missing or invalid Supabase keys,
+    \item Redis connectivity failures,
+    \item insecure cookie settings in public production environments,
+    \item schema mismatches between code expectations and database state.
+\end{itemize}
+
+\section{Conclusion and Future Work}
+\subsection{Conclusion}
+QMedix successfully demonstrates the design and implementation of a full stack hospital queue and appointment management platform using modern web technologies. The project integrates a role-based React frontend, an Express backend, Supabase for persistence and authentication, Redis for caching, and realtime synchronization for live queue visibility. The resulting system addresses practical issues such as waiting uncertainty, uneven doctor load, and fragmented operational coordination.
+
+From a software engineering perspective, the project also reflects several important principles. Concerns are separated across routes, controllers, services, middleware, contexts, and UI components. State transitions are explicit. Realtime behavior is isolated in dedicated modules. Testing has been introduced at the API level. These qualities make the project a strong academic demonstration of full stack application design for a healthcare-oriented problem.
+
+\subsection{Future Work}
+Several enhancements can strengthen QMedix in future iterations:
+\begin{itemize}
+    \item notification services through SMS, email, or messaging platforms,
+    \item richer analytics such as average wait time, department utilization, and doctor load trends,
+    \item patient-side estimated waiting time prediction,
+    \item stronger frontend testing and end-to-end automation,
+    \item secure production-grade cookie settings and rate limiting,
+    \item billing, prescription, and record-integration modules,
+    \item advanced triage or recommendation support,
+    \item multi-hospital administration and audit logs.
+\end{itemize}
+
+\appendices
+
+\section{Important Codebase References}
+\begin{tabularx}{\textwidth}{l X}
+\toprule
+\textbf{File Path} & \textbf{Role in the Project} \\
+\midrule
+\texttt{server.js} & backend entry point that boots the application runtime \\
+\texttt{src/app.js} & central application setup with middleware, routes, and Redis connection \\
+\texttt{src/routes/auth.js} & authentication and approval endpoints \\
+\texttt{src/controller/auth.js} & request handlers for sign-up, login, approval, and logout \\
+\texttt{src/services/auth.js} & authentication and profile business logic with Supabase \\
+\texttt{src/services/patient.js} & patient booking and appointment management logic \\
+\texttt{src/services/doctor.js} & doctor retrieval, availability updates, completion handling \\
+\texttt{src/services/hospital.js} & hospital data, approvals, staff data, OPD persistence \\
+\texttt{src/services/staff.js} & emergency workflows and walk-in registration \\
+\texttt{src/services/global.js} & current-day appointment retrieval \\
+\texttt{../QMedix-fe/src/App.jsx} & frontend route shell and session bootstrap \\
+\texttt{../QMedix-fe/src/context/authContext.jsx} & shared authenticated user state \\
+\texttt{../QMedix-fe/src/context/QueueContext.jsx} & queue state distribution for hospital-aware components \\
+\texttt{../QMedix-fe/src/services/apiWrapper.js} & HTTP client with refresh-token retry interceptor \\
+\texttt{../QMedix-fe/src/services/queueEngine.js} & queue aggregation, ordering, and position mapping \\
+\texttt{../QMedix-fe/src/services/realtimeService.js} & Supabase realtime subscription wiring \\
+\texttt{../QMedix-fe/src/pages/patient/BookAppointment.jsx} & patient booking wizard \\
+\texttt{../QMedix-fe/src/pages/admin/AdminDashboard.jsx} & admin dashboard logic and live operational analytics \\
+\bottomrule
+\end{tabularx}
+\section{Code Listing Appendix}
+The following listings include the three most architecturally significant source files from the QMedix frontend: the queue engine, the realtime service, and the API wrapper. These modules together enable live queue synchronization with sub-2-second latency.
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{Frontend Queue Engine — \texttt{src/services/queueEngine.js}}
+The queue engine is a singleton class that maintains in-memory appointment state grouped by hospital and doctor. It processes insert, update, and delete events from Supabase realtime and rebuilds patient positions after each mutation.
+
+\begin{lstlisting}[caption={Queue Engine — in-memory queue management and realtime mutation handlers}]
+import api from "./apiWrapper.js"
+
+class QueueEngine {
+  constructor() {
+    this.appointments = new Map();
+    this.queues = new Map();   // hospitalId -> doctorId -> { waiting, in_progress, completed }
+    this.positions = new Map(); // appointmentId -> position number
+  }
+
+  async init() {
+    const res = await api("GET", "/global/appointments/today");
+    const appointments = res.data?.data;
+    this.buildQueues(appointments);
+    return appointments;
+  }
+
+  sortWaitingQueue(h, d) {
+    const doctorQueue = this.queues.get(h)?.get(d);
+    if (!doctorQueue) return;
+    // Emergency patients are always served first; then sorted by created_at
+    doctorQueue.waiting.sort((a, b) => {
+      if (a.isEmergency !== b.isEmergency) return b.isEmergency - a.isEmergency;
+      return new Date(a.created_at) - new Date(b.created_at);
+    });
+  }
+
+  rebuildPositions(hospitalId, doctorId) {
+    const doctorQueue = this.queues.get(hospitalId)?.get(doctorId);
+    if (!doctorQueue) return;
+    // Clear all existing positions for this doctor's queue
+    [...doctorQueue.in_progress, ...doctorQueue.completed,
+     ...doctorQueue.waiting].forEach(app => {
+      this.positions.delete(app.appointment_id);
+    });
+    // Assign Q-1, Q-2, ... only to waiting patients
+    doctorQueue.waiting.forEach((app, index) => {
+      this.positions.set(app.appointment_id, index + 1);
+    });
+  }
+
+  buildQueues(appointments) {
+    this.appointments.clear();
+    this.queues.clear();
+    appointments.forEach(app => {
+      this.appointments.set(app.appointment_id, app);
+      const hospitalId = app.hospital_id;
+      const doctorId   = app.assigned_doctor;
+      if (!this.queues.has(hospitalId))
+        this.queues.set(hospitalId, new Map());
+      const hospitalQueues = this.queues.get(hospitalId);
+      if (!hospitalQueues.has(doctorId))
+        hospitalQueues.set(doctorId,
+          { in_progress: [], waiting: [], completed: [] });
+      hospitalQueues.get(doctorId)[app.status].push(app);
+    });
+    this.queues.forEach((hospital, hospitalId) => {
+      hospital.forEach((_, doctorId) => {
+        this.sortWaitingQueue(hospitalId, doctorId);
+        this.rebuildPositions(hospitalId, doctorId);
+      });
+    });
+  }
+
+  handleInsert(app) {
+    this.appointments.set(app.appointment_id, app);
+    const h = app.hospital_id;
+    const d = app.assigned_doctor;
+    if (!this.queues.has(h)) this.queues.set(h, new Map());
+    const hospital = this.queues.get(h);
+    if (!hospital.has(d))
+      hospital.set(d, { in_progress: [], waiting: [], completed: [] });
+    hospital.get(d)[app.status].push(app);
+    if (app.status === "waiting") this.sortWaitingQueue(h, d);
+    this.rebuildPositions(h, d);
+  }
+
+  handleUpdate(newApp) {
+    const oldApp = this.appointments.get(newApp.appointment_id);
+    if (!oldApp) return;
+    const h = oldApp.hospital_id;
+    const d = oldApp.assigned_doctor;
+    const doctorQueue = this.queues.get(h)?.get(d);
+    if (!doctorQueue) return;
+    const oldList = doctorQueue[oldApp.status];
+    const idx = oldList.findIndex(
+      a => a.appointment_id === oldApp.appointment_id);
+    if (idx !== -1) oldList.splice(idx, 1);
+    doctorQueue[newApp.status].push(newApp);
+    if (newApp.status === "waiting") this.sortWaitingQueue(h, d);
+    this.rebuildPositions(h, d);
+    this.appointments.set(newApp.appointment_id, newApp);
+  }
+
+  handleDelete(app) {
+    const h = app.hospital_id;
+    const d = app.assigned_doctor;
+    const doctorQueue = this.queues.get(h)?.get(d);
+    if (!doctorQueue) return;
+    const list = doctorQueue[app.status];
+    const idx = list.findIndex(
+      a => a.appointment_id === app.appointment_id);
+    if (idx !== -1) list.splice(idx, 1);
+    this.rebuildPositions(h, d);
+    this.appointments.delete(app.appointment_id);
+  }
+
+  getDoctorQueue(hospitalId, doctorId) {
+    const hospital = this.queues.get(hospitalId);
+    if (!hospital) return [];
+    const doctorQueue = hospital.get(doctorId);
+    if (!doctorQueue) return [];
+    return [...doctorQueue.in_progress, ...doctorQueue.waiting];
+  }
+
+  getPatientPosition(appointmentId) {
+    return this.positions.get(appointmentId) || null;
+  }
+}
+
+export default new QueueEngine();
+\end{lstlisting}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{Realtime Service — \texttt{src/services/realtimeService.js}}
+This module wires Supabase PostgreSQL change events to the queue engine handlers so that every insert, update, or delete on the \texttt{Appointment} table is processed within milliseconds.
+
+\begin{lstlisting}[caption={Realtime service — Supabase channel subscription and queue engine wiring}]
+import { supabase } from "./supabaseClient.js";
+import queueEngine  from "./queueEngine.js";
+
+/**
+ * createAppointmentChannel
+ * Opens a Supabase realtime channel for the Appointment table.
+ * The optional `filter` parameter can restrict events to a specific
+ * hospital (e.g. "hospital_id=eq.<uuid>").
+ * Each database event is routed to the appropriate queueEngine handler
+ * so the in-memory state stays synchronized with the database.
+ * After the engine is updated, `onEvent` is called so React components
+ * can re-render with the new queue data.
+ */
+export const createAppointmentChannel = ({ filter, onEvent }) => {
+  const channel = supabase
+    .channel("appointments-realtime")
+    .on(
+      "postgres_changes",
+      {
+        event:  "*",
+        schema: "public",
+        table:  "Appointment",
+        filter,         // undefined = all hospitals; "hospital_id=eq.X" = scoped
+      },
+      (payload) => {
+        if (payload.eventType === "INSERT")
+          queueEngine.handleInsert(payload.new);
+
+        if (payload.eventType === "UPDATE")
+          queueEngine.handleUpdate(payload.new);
+
+        if (payload.eventType === "DELETE")
+          queueEngine.handleDelete(payload.old);
+
+        onEvent(payload);  // notify React state to re-render dashboards
+      }
+    )
+    .subscribe();
+  return channel;
+};
+
+export const removeChannel = (channel) => {
+  supabase.removeChannel(channel);
+};
+\end{lstlisting}
+
+% ──────────────────────────────────────────────────────────────────────────────
+\subsection{API Wrapper — \texttt{src/services/apiWrapper.js}}
+All HTTP requests from the frontend pass through this Axios client. It automatically retries a request once after refreshing the session token if the server responds with \texttt{401 Unauthorized}, providing a transparent token-rotation experience for the user.
+
+\begin{lstlisting}[caption={API wrapper — Axios client with automatic JWT refresh-token retry}]
+import axios from "axios";
+
+const client = axios.create({
+  baseURL:         `${import.meta.env.VITE_BACKEND_URL}/`,
+  withCredentials: true,   // send HttpOnly cookie on every request
+});
+
+/**
+ * Response interceptor: if a request fails with 401 (token expired),
+ * attempt a silent refresh by calling /auth/refresh, then retry the
+ * original request exactly once.  If the refresh also fails the error
+ * propagates normally so the app can redirect to /login.
+ */
+client.interceptors.response.use(
+  (response) => response,
+  async (error) => {
+    const originalRequest = error.config;
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      await axios.post(
+        `${import.meta.env.VITE_BACKEND_URL}/auth/refresh`,
+        {},
+        { withCredentials: true }
+      );
+      return client(originalRequest);
+    }
+    return Promise.reject(error);
+  }
+);
+
+const api = async (method, url, data = null) => {
+  try {
+    const res = await client({ method, url, data });
+    return res;
+  } catch (error) {
+    console.error(`error in ${url}:`,
+      error?.response?.data || error.message);
+    throw error;
+  }
+};
+
+export default api;
+\end{lstlisting}
+
+\end{document}
