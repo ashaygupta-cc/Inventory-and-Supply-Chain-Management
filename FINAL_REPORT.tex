@@ -1,0 +1,873 @@
+\documentclass[12pt,onecolumn]{IEEEtran}
+
+\usepackage[a4paper,top=1in,bottom=1in,left=1.05in,right=1.05in]{geometry}
+\usepackage{cite}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{hyperref}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{ifthen}
+\usepackage{setspace}
+\usepackage{ltablex}
+\keepXColumns
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!50!black,
+    urlcolor=blue!50!black,
+    citecolor=blue!50!black
+}
+
+\definecolor{codebg}{RGB}{247,248,250}
+\definecolor{codekeyword}{RGB}{0,78,150}
+\definecolor{codecomment}{RGB}{0,120,90}
+\definecolor{codestring}{RGB}{150,70,10}
+
+\lstdefinelanguage{JavaScript}{
+    keywords={const,let,var,async,await,return,if,else,for,while,class,import,from,export,default,try,catch,throw,new,switch,case,break,function},
+    keywordstyle=\color{codekeyword}\bfseries,
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    morestring=[b]',
+    morestring=[b]"
+}
+
+\lstset{
+    language=JavaScript,
+    basicstyle=\ttfamily\footnotesize,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=2,
+    showstringspaces=false,
+    captionpos=b
+}
+
+\setlist[itemize]{leftmargin=1.5em}
+\setlist[enumerate]{leftmargin=1.8em}
+\setstretch{1.18}
+\setlength{\parskip}{0.45em}
+\setlength{\parindent}{0.22in}
+
+\let\oldsection\section
+\renewcommand{\section}{\clearpage\oldsection}
+
+\newcommand{\placeholderimage}[3]{
+    \begin{figure}[H]
+        \centering
+        \IfFileExists{#1}{
+            \includegraphics[width=#2\textwidth]{#1}
+        }{
+            \fbox{
+                \parbox[c][2.7in][c]{0.78\textwidth}{
+                    \centering
+                    Placeholder for image or screenshot\\[4pt]
+                    \texttt{#1}
+                }
+            }
+        }
+        \caption{#3}
+    \end{figure}
+}
+
+\begin{document}
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\begin{tcolorbox}[criticalbox, title={Critical Risks Identified During White Box Analysis}]
+\begin{enumerate}
+  \item \textbf{Order Creation Lacks Database Transaction (DB-007)} \\
+  \texttt{prisma.order.create()} and \texttt{prisma.product.update(reservedQuantity)} are
+  separate operations. If the second fails, the order exists but stock is not reserved.
+  \textbf{Fix:} Wrap in \texttt{prisma.\$transaction([...])}.
+
+  \item \textbf{JWT\_SECRET Defaults to Weak Value} \\
+  \texttt{const JWT\_SECRET = process.env.JWT\_SECRET || "your\_jwt\_secret"} \\
+  If the environment variable is not set in production, all tokens are signed with a
+  publicly known secret. \textbf{Fix:} Throw an error if \texttt{JWT\_SECRET} is not set.
+
+  \item \textbf{BigInt Precision Loss for Large Quantities (DB-005)} \\
+  \texttt{Number(product.quantity)} loses precision for values $> 2^{53} - 1$.
+  \textbf{Fix:} Use \texttt{BigInt} throughout or document the maximum safe quantity.
+
+  \item \textbf{generateOrderNumber Race Condition (ORD-002)} \\
+  The sequence is based on a count at the time of the call, not an atomic increment.
+  Under high concurrency, two orders could get the same number.
+  \textbf{Fix:} Use an atomic counter or UUID-based order numbers.
+
+  \item \textbf{generateInvoiceNumber Infinite Loop Risk (INV-002)} \\
+  The \texttt{while} loop retries on collision but has no maximum retry limit.
+  In theory, it could loop forever if all 9000 combinations are taken.
+  \textbf{Fix:} Add a maximum retry count (e.g., 10) and throw after exhaustion.
+\end{enumerate}
+\end{tcolorbox}
+
+% ══════════════════════════════════════════════════════════════════════════════
+%  END OF DOCUMENT
+% ══════════════════════════════════════════════════════════════════════════════
+\end{document}
+
+
+\section{Sample Test Implementations}
+
+% =============================================================================
+
+
+\section{Project Management and Development Process}
+
+% =============================================================================
+
+
+\section{Comparative Analysis}
+
+% =============================================================================
+
+
+\section{Performance Analysis and Optimization}
+
+% =============================================================================
+
+
+\section{Security Analysis}
+
+% =============================================================================
+
+
+\section{Detailed Implementation Walkthrough}
+\placeholderimage{admin-dashboard.png}{0.9}{Admin Summary Dashboard.}
+\placeholderimage{admin-insights.png}{0.9}{Admin Insights Dashboard.}
+\placeholderimage{category-management-dashboard.png}{0.9}{Category Management Interface.}
+\placeholderimage{client-portal.png}{0.9}{Client Portal Overview.}
+\placeholderimage{extra-info-page.png}{0.9}{Extended Information Interface.}
+\placeholderimage{invoice-management-dashboard.png}{0.9}{Invoice Tracking View.}
+\placeholderimage{login-page.png}{0.9}{Secure Login Interface.}
+\placeholderimage{order-management-dashboard.png}{0.9}{Order Logistics View.}
+\placeholderimage{product-dashboard.png}{0.9}{Product Tracking.}
+\placeholderimage{product-inventory-insights-page.png}{0.9}{Product Insights Analysis.}
+\placeholderimage{product-inventory-insights-page2.png}{0.9}{Advanced Forecasting Analytics.}
+\placeholderimage{product-inventory-page.png}{0.9}{In-depth Product View.}
+\placeholderimage{product-view.png}{0.9}{Individual Product Modal.}
+\placeholderimage{store-overview-page.png}{0.9}{Storefront Representation.}
+\placeholderimage{supplier-management-page.png}{0.9}{Supplier Entity Configuration.}
+\placeholderimage{supplier-portal.png}{0.9}{Supplier Dedicated Portal.}
+\placeholderimage{user-interface.png}{0.9}{User Profile Management.}
+\placeholderimage{warehouse-management-page.png}{0.9}{Warehouse Spatial Tracking.}
+
+
+% =============================================================================
+
+
+\section{Introduction}
+
+% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+
+\section{Requirement Analysis}
+\placeholderimage{NFR and Stereotypes.jpeg}{0.8}{NFR and Stereotypes Diagram.}
+
+
+% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+
+\section{Design and Architecture}
+\placeholderimage{system-design.png}{0.9}{Complete System Design Architecture.}
+\placeholderimage{Data Flow Architecture.png}{0.8}{Data Flow Architecture.}
+\placeholderimage{Uml_daigram.png}{0.9}{UML Class Diagram.}
+\placeholderimage{erdplus.png}{0.9}{Entity-Relationship Diagram.}
+\placeholderimage{activity_daigram.png}{0.9}{Activity Diagram.}
+
+
+% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+
+\section{Implementation Details}
+
+% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+
+\section{Testing and Deployment}
+
+% â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•
+
+
+\section{Conclusion and Future Work}
+
+% =============================================================================
+
+
+\section{White Box: Module 1: Authentication \& Session Management}
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Source Files:} \texttt{utils/auth.ts}, \texttt{app/api/auth/login/route.ts}
+
+\section{Internal Logic Walkthrough}
+
+\subsection{verifyToken --- Branch Map}
+
+\begin{tcolorbox}[warningbox, title={Security Critical Function}]
+\texttt{verifyToken} has 5 distinct branches. All must be covered. The JWT\_SECRET
+defaults to \texttt{"your\_jwt\_secret"} if the environment variable is not set ---
+this is a \textbf{critical security risk} in production.
+\end{tcolorbox}
+
+\begin{center}
+\begin{tabular}{clp{7cm}}
+  \toprule
+  \textbf{Branch} & \textbf{Condition} & \textbf{Result} \\
+  \midrule
+  A & \texttt{token} is falsy, \texttt{"null"}, or \texttt{"undefined"} & \texttt{return null} \\
+  B & \texttt{isServer === false} (client-side execution) & \texttt{return null} \\
+  C & \texttt{jwt} is undefined or \texttt{jwt.verify} missing & \texttt{return null} \\
+  D & \texttt{jwt.verify} throws (expired / invalid / malformed) & \texttt{catch} $\to$ \texttt{return null} \\
+  E & \texttt{jwt.verify} succeeds & \texttt{return \{ userId \}} \\
+  \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{verifyToken Control Flow Diagram}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=1.1cm]
+
+  \node[startstop] (start) {verifyToken(token)};
+  \node[decision, below=of start] (d1) {token falsy / ``null'' / ``undefined''?};
+  \node[terminal, right=3cm of d1] (rA) {return null \\ \small(Branch A)};
+  \node[decision, below=of d1] (d2) {isServer === false?};
+  \node[terminal, right=3cm of d2] (rB) {return null \\ \small(Branch B)};
+  \node[decision, below=of d2] (d3) {jwt undefined?};
+  \node[terminal, right=3cm of d3] (rC) {return null \\ \small(Branch C)};
+  \node[process, below=of d3] (verify) {jwt.verify(token, JWT\_SECRET)};
+  \node[decision, below=of verify] (d4) {throws error?};
+  \node[terminal, right=3cm of d4] (rD) {return null \\ \small(Branch D)};
+  \node[terminal, below=of d4] (rE) {return \{userId\} \\ \small(Branch E)};
+
+  \draw[arrow] (start) -- (d1);
+  \draw[arrow] (d1) -- node[yes, above]{Yes} (rA);
+  \draw[arrow] (d1) -- node[no, right]{No} (d2);
+  \draw[arrow] (d2) -- node[yes, above]{Yes} (rB);
+  \draw[arrow] (d2) -- node[no, right]{No} (d3);
+  \draw[arrow] (d3) -- node[yes, above]{Yes} (rC);
+  \draw[arrow] (d3) -- node[no, right]{No} (verify);
+  \draw[arrow] (verify) -- (d4);
+  \draw[arrow] (d4) -- node[yes, above]{Yes} (rD);
+  \draw[arrow] (d4) -- node[no, right]{No} (rE);
+
+\end{tikzpicture}
+\caption{Control flow diagram for \texttt{verifyToken}}
+\end{figure}
+
+\subsection{Login Route Decision Tree}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=1.0cm]
+
+  \node[startstop] (start) {POST /api/auth/login};
+  \node[decision, below=of start] (d1) {Body is valid object?};
+  \node[terminal, right=3.5cm of d1] (r400a) {400 Bad Request};
+  \node[decision, below=of d1] (d2) {Zod schema valid?};
+  \node[terminal, right=3.5cm of d2] (r400b) {400 Bad Request};
+  \node[decision, below=of d2] (d3) {User found in DB?};
+  \node[terminal, right=3.5cm of d3] (r401a) {401 Unauthorized};
+  \node[decision, below=of d3] (d4) {user.password exists?};
+  \node[terminal, right=3.5cm of d4] (r500a) {500 Server Error};
+  \node[decision, below=of d4] (d5) {bcrypt.compare true?};
+  \node[terminal, right=3.5cm of d5] (r401b) {401 Unauthorized};
+  \node[decision, below=of d5] (d6) {Token generated?};
+  \node[terminal, right=3.5cm of d6] (r500b) {500 Server Error};
+  \node[terminal, below=of d6] (r200) {200 OK + Set Cookie};
+
+  \draw[arrow] (start) -- (d1);
+  \draw[arrow] (d1) -- node[no, above]{No} (r400a);
+  \draw[arrow] (d1) -- node[yes, right]{Yes} (d2);
+  \draw[arrow] (d2) -- node[no, above]{No} (r400b);
+  \draw[arrow] (d2) -- node[yes, right]{Yes} (d3);
+  \draw[arrow] (d3) -- node[no, above]{No} (r401a);
+  \draw[arrow] (d3) -- node[yes, right]{Yes} (d4);
+  \draw[arrow] (d4) -- node[no, above]{No} (r500a);
+  \draw[arrow] (d4) -- node[yes, right]{Yes} (d5);
+  \draw[arrow] (d5) -- node[no, above]{No} (r401b);
+  \draw[arrow] (d5) -- node[yes, right]{Yes} (d6);
+  \draw[arrow] (d6) -- node[no, above]{No} (r500b);
+  \draw[arrow] (d6) -- node[yes, right]{Yes} (r200);
+
+\end{tikzpicture}
+\caption{Login route complete decision tree}
+\end{figure}
+
+\section{Test Cases --- Authentication}
+
+\begin{tcolorbox}[testbox, title={AUTH-001 \hfill \pone}]
+\textbf{Function:} \texttt{verifyToken} \\
+\textbf{Scenario:} Token is an empty string \\
+\textbf{Input:} \texttt{token = ""} \\
+\textbf{Expected Path:} Branch A (falsy check) $\to$ \texttt{return null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Statement + Branch A
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-002 \hfill \pone}]
+\textbf{Function:} \texttt{verifyToken} \\
+\textbf{Scenario:} Token is the string \texttt{"null"} \\
+\textbf{Input:} \texttt{token = "null"} \\
+\textbf{Expected Path:} Branch A (string \texttt{"null"} check) $\to$ \texttt{return null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Branch A edge case
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-003 \hfill \pone}]
+\textbf{Function:} \texttt{verifyToken} \\
+\textbf{Scenario:} Token is the string \texttt{"undefined"} \\
+\textbf{Input:} \texttt{token = "undefined"} \\
+\textbf{Expected Path:} Branch A $\to$ \texttt{return null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Branch A edge case
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-004 \hfill \pone}]
+\textbf{Function:} \texttt{verifyToken} \\
+\textbf{Scenario:} Valid JWT token on server side \\
+\textbf{Input:} Token generated by \texttt{generateToken("user123")} \\
+\textbf{Expected Path:} Branch E $\to$ \texttt{return \{ userId: "user123" \}} \\
+\textbf{Expected Output:} \texttt{\{ userId: "user123" \}} \\
+\textbf{Coverage:} Happy path
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={AUTH-005 \hfill \pone\ --- Expired Token}]
+\textbf{Function:} \texttt{verifyToken} \\
+\textbf{Scenario:} Expired JWT token \\
+\textbf{Input:} Token with \texttt{expiresIn: "1ms"}, verified after 10ms delay \\
+\textbf{Expected Path:} Branch D $\to$ \texttt{jwt.verify} throws \texttt{TokenExpiredError} $\to$ \texttt{return null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Exception handling branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={AUTH-006 \hfill \pone\ --- Wrong Secret (Security)}]
+\textbf{Function:} \texttt{verifyToken} \\
+\textbf{Scenario:} Token signed with wrong secret \\
+\textbf{Input:} \texttt{jwt.sign(\{ userId: "x" \}, "WRONG\_SECRET")} \\
+\textbf{Expected Path:} Branch D $\to$ \texttt{jwt.verify} throws \texttt{JsonWebTokenError} $\to$ \texttt{return null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Security branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-007 \hfill \pone}]
+\textbf{Function:} \texttt{verifyToken} \\
+\textbf{Scenario:} Malformed / random string token \\
+\textbf{Input:} \texttt{token = "not.a.jwt.token"} \\
+\textbf{Expected Path:} Branch D $\to$ catch $\to$ \texttt{return null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Malformed input
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-008 \hfill \pone}]
+\textbf{Function:} \texttt{generateToken} \\
+\textbf{Scenario:} Valid userId generates a decodable token \\
+\textbf{Input:} \texttt{userId = "abc123"} \\
+\textbf{Expected:} \texttt{jwt.decode(result).userId === "abc123"} \\
+\textbf{Coverage:} Token payload integrity
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-009 \hfill \pone}]
+\textbf{Function:} \texttt{hashPassword} + \texttt{comparePassword} \\
+\textbf{Scenario:} Hash then compare same password (round-trip) \\
+\textbf{Input:} \texttt{password = "SecurePass123!"} \\
+\textbf{Steps:} (1) \texttt{hash = await hashPassword(password)} \quad (2) \texttt{result = await comparePassword(password, hash)} \\
+\textbf{Expected:} \texttt{result === true} \\
+\textbf{Coverage:} Round-trip password verification
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-010 \hfill \pone}]
+\textbf{Function:} \texttt{comparePassword} \\
+\textbf{Scenario:} Wrong password against valid hash \\
+\textbf{Input:} \texttt{comparePassword("WrongPass", hashOf("CorrectPass"))} \\
+\textbf{Expected:} \texttt{false} \\
+\textbf{Coverage:} Negative comparison branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-011 \hfill \pone}]
+\textbf{Route:} \texttt{POST /api/auth/login} \\
+\textbf{Scenario:} Missing email field in body \\
+\textbf{Input:} \texttt{\{ password: "test123" \}} \\
+\textbf{Expected Path:} \texttt{loginSchema.parse} throws \texttt{ZodError} $\to$ 400 \\
+\textbf{Expected Response:} \texttt{\{ error: "..." \}}, status \textbf{400} \\
+\textbf{Coverage:} Zod validation branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-012 \hfill \pone}]
+\textbf{Route:} \texttt{POST /api/auth/login} \\
+\textbf{Scenario:} User not found in database \\
+\textbf{Input:} \texttt{\{ email: "nonexistent@test.com", password: "pass" \}} \\
+\textbf{Mock:} \texttt{prisma.user.findUnique} returns \texttt{null} \\
+\textbf{Expected Path:} \texttt{user === null} $\to$ 401 \\
+\textbf{Expected Response:} \texttt{\{ error: "Invalid email or password" \}}, status \textbf{401} \\
+\textbf{Coverage:} User not found branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={AUTH-013 \hfill \ptwo\ --- Corrupted Data}]
+\textbf{Route:} \texttt{POST /api/auth/login} \\
+\textbf{Scenario:} User found but \texttt{password} field is \texttt{null} \\
+\textbf{Mock:} \texttt{prisma.user.findUnique} returns \texttt{\{ id: "x", password: null \}} \\
+\textbf{Expected Path:} \texttt{!user.password} $\to$ 500 \\
+\textbf{Expected Response:} \texttt{\{ error: "User data corrupted: password missing" \}}, status \textbf{500} \\
+\textbf{Coverage:} Data corruption branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-014 \hfill \pone}]
+\textbf{Route:} \texttt{POST /api/auth/login} \\
+\textbf{Scenario:} Correct credentials --- full happy path \\
+\textbf{Input:} \texttt{\{ email: "admin@test.com", password: "correct" \}} \\
+\textbf{Mock:} User found, \texttt{bcrypt.compare} returns \texttt{true} \\
+\textbf{Expected Response:} Status \textbf{200}, \texttt{Set-Cookie} header with \texttt{session\_id} \\
+\textbf{Coverage:} Full happy path
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-015 \hfill \pone}]
+\textbf{Function:} \texttt{getSessionFromRequest} \\
+\textbf{Scenario:} No \texttt{session\_id} cookie present \\
+\textbf{Input:} Request with no cookies \\
+\textbf{Expected Path:} \texttt{cookie === undefined} $\to$ \texttt{return null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Missing cookie branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={AUTH-016 \hfill \ptwo}]
+\textbf{Function:} \texttt{getSessionFromRequest} \\
+\textbf{Scenario:} Valid cookie but user deleted from DB \\
+\textbf{Mock:} \texttt{prisma.user.findUnique} returns \texttt{null} \\
+\textbf{Expected Path:} Decoded OK $\to$ DB query $\to$ \texttt{null} \\
+\textbf{Expected Output:} \texttt{null} \\
+\textbf{Coverage:} Deleted user edge case
+\end{tcolorbox}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\section{White Box: Module 2: Order Management \& Stock State Machine}
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Source Files:} \texttt{prisma/order.ts}, \texttt{app/api/orders/route.ts}
+
+\section{Stock Reservation State Machine}
+
+\begin{tcolorbox}[criticalbox, title={Critical Business Logic --- Stock Reservation}]
+\begin{itemize}
+  \item \textbf{Order CREATE (pending):} \texttt{reservedQuantity} \textbf{INCREASES} (stock reserved, not deducted)
+  \item \textbf{Order CONFIRM / PAY:} \texttt{quantity} \textbf{DECREASES}, \texttt{reservedQuantity} \textbf{DECREASES}
+  \item \textbf{Order CANCEL (was pending):} \texttt{reservedQuantity} \textbf{DECREASES} (reservation released)
+  \item \textbf{Order CANCEL (was confirmed/paid):} \texttt{quantity} \textbf{INCREASES} (stock restored)
+  \item \textbf{Available Stock Formula:} $\text{availableStock} = \text{quantity} - \text{reservedQuantity}$
+\end{itemize}
+\end{tcolorbox}
+
+\subsection{Order Status State Machine Diagram}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=1.8cm, every node/.style={font=\small}]
+
+  \node[startstop] (pending) {PENDING \\ \tiny reservedQty++};
+  \node[process, right=3cm of pending] (confirmed) {CONFIRMED \\ \tiny qty--, reservedQty--};
+  \node[process, right=3cm of confirmed] (processing) {PROCESSING};
+  \node[process, below=2cm of processing] (shipped) {SHIPPED};
+  \node[process, below=2cm of confirmed] (delivered) {DELIVERED};
+  \node[terminal, below=2cm of pending] (cancelled) {CANCELLED};
+
+  \draw[arrow] (pending) -- node[above]{\tiny confirm/pay} (confirmed);
+  \draw[arrow] (confirmed) -- node[above]{\tiny process} (processing);
+  \draw[arrow] (processing) -- node[right]{\tiny ship} (shipped);
+  \draw[arrow] (shipped) -- node[below]{\tiny deliver} (delivered);
+  \draw[arrow] (pending) -- node[left]{\tiny cancel \\ \tiny reservedQty--} (cancelled);
+  \draw[arrow] (confirmed) -- node[right]{\tiny cancel \\ \tiny qty++} (cancelled);
+  \draw[arrow] (processing) to[bend right=40] node[right]{\tiny cancel \\ \tiny qty++} (cancelled);
+  \draw[arrow] (shipped) to[bend right=50] node[right]{\tiny cancel \\ \tiny qty++} (cancelled);
+
+\end{tikzpicture}
+\caption{Order status state machine with stock side-effects}
+\end{figure}
+
+\subsection{createOrder Control Flow Diagram}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=1.0cm]
+
+  \node[startstop] (start) {createOrder(data, userId)};
+  \node[process, below=of start] (gennum) {generateOrderNumber()};
+  \node[process, below=of gennum] (loop) {For each item in data.items};
+  \node[decision, below=of loop] (d1) {Product found in DB?};
+  \node[terminal, right=3.5cm of d1] (err1) {throw Error \\ ``Product not found''};
+  \node[decision, below=of d1] (d2) {availableStock $\geq$ qty?};
+  \node[terminal, right=3.5cm of d2] (err2) {throw Error \\ ``Insufficient stock''};
+  \node[process, below=of d2] (calc) {Calculate lineSubtotal \\ Push to orderItemsData};
+  \node[decision, below=of calc] (d3) {More items?};
+  \node[process, below=of d3] (create) {prisma.order.create()};
+  \node[process, below=of create] (reserve) {reservedQuantity += qty \\ (for each product)};
+  \node[process, below=of reserve] (cache) {Invalidate product cache};
+  \node[terminal, below=of cache] (ret) {return order};
+
+  \draw[arrow] (start) -- (gennum);
+  \draw[arrow] (gennum) -- (loop);
+  \draw[arrow] (loop) -- (d1);
+  \draw[arrow] (d1) -- node[no, above]{No} (err1);
+  \draw[arrow] (d1) -- node[yes, right]{Yes} (d2);
+  \draw[arrow] (d2) -- node[no, above]{No} (err2);
+  \draw[arrow] (d2) -- node[yes, right]{Yes} (calc);
+  \draw[arrow] (calc) -- (d3);
+  \draw[arrow] (d3.west) to[bend left=60] node[yes, left]{Yes} (loop.west);
+  \draw[arrow] (d3) -- node[no, right]{No} (create);
+  \draw[arrow] (create) -- (reserve);
+  \draw[arrow] (reserve) -- (cache);
+  \draw[arrow] (cache) -- (ret);
+
+\end{tikzpicture}
+\caption{createOrder complete control flow}
+\end{figure}
+
+\section{Test Cases --- Order Management}
+
+\begin{tcolorbox}[testbox, title={ORD-001 \hfill \ptwo}]
+\textbf{Function:} \texttt{generateOrderNumber} \\
+\textbf{Scenario:} First order of the day (0 existing orders today) \\
+\textbf{Mock:} \texttt{prisma.order.count} returns \texttt{0} \\
+\textbf{Expected:} Sequence part = \texttt{"0001"}, format: \texttt{ORD-2026-0401-HHMMSS-0001} \\
+\textbf{Coverage:} Sequence generation, zero-count branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-002 \hfill \pthree\ --- Boundary}]
+\textbf{Function:} \texttt{generateOrderNumber} \\
+\textbf{Scenario:} 9999 orders already exist today \\
+\textbf{Mock:} \texttt{prisma.order.count} returns \texttt{9999} \\
+\textbf{Expected:} Sequence = \texttt{"10000"} (5 digits, overflow of 4-digit pad) \\
+\textbf{Note:} Race condition possible under high concurrency --- not atomic \\
+\textbf{Coverage:} Boundary value, sequence overflow
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={ORD-003 \hfill \pone\ --- Product Not Found}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} Product not found in database \\
+\textbf{Input:} \texttt{data.items = [\{ productId: "nonexistent", quantity: 1 \}]} \\
+\textbf{Mock:} \texttt{prisma.product.findUnique} returns \texttt{null} \\
+\textbf{Expected:} \texttt{throw Error("Product not found: nonexistent")} \\
+\textbf{Coverage:} Product not found branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={ORD-004 \hfill \pone\ --- Insufficient Stock}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} Insufficient available stock \\
+\textbf{Input:} \texttt{item.quantity = 10} \\
+\textbf{Mock:} \texttt{product.quantity = 15}, \texttt{product.reservedQuantity = 8} \\
+\textbf{Internal:} $\text{availableStock} = 15 - 8 = 7 < 10$ \\
+\textbf{Expected:} \texttt{throw Error("Insufficient stock. Available: 7, Requested: 10")} \\
+\textbf{Coverage:} Stock check branch (insufficient)
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-005 \hfill \pone\ --- Exact Stock Boundary}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} Exactly enough stock (boundary value) \\
+\textbf{Input:} \texttt{item.quantity = 7} \\
+\textbf{Mock:} \texttt{product.quantity = 15}, \texttt{product.reservedQuantity = 8} \\
+\textbf{Internal:} $\text{availableStock} = 7 = 7$ (exactly enough) \\
+\textbf{Expected:} Order created successfully, no error \\
+\textbf{Coverage:} Boundary value (exact stock match)
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={ORD-006 \hfill \pone\ --- Boundary + 1}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} One more than available stock \\
+\textbf{Input:} \texttt{item.quantity = 8} \\
+\textbf{Mock:} \texttt{product.quantity = 15}, \texttt{product.reservedQuantity = 8} \\
+\textbf{Internal:} $\text{availableStock} = 7 < 8$ \\
+\textbf{Expected:} \texttt{throw Error("Insufficient stock")} \\
+\textbf{Coverage:} Boundary value + 1
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-007 \hfill \ptwo}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} \texttt{reservedQuantity} is \texttt{null} (not yet set) \\
+\textbf{Mock:} \texttt{product.quantity = 10}, \texttt{product.reservedQuantity = null} \\
+\textbf{Internal:} $\text{availableStock} = 10 - \texttt{Number(null)} = 10 - 0 = 10$ \\
+\textbf{Expected:} \texttt{availableStock} correctly computed as \texttt{10} \\
+\textbf{Coverage:} Null coalescing in stock calculation
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={ORD-008 \hfill \pone\ --- Atomicity Gap}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} Multiple items, second item fails stock check \\
+\textbf{Input:} \texttt{items = [\{ productA, qty: 1 \}, \{ productB, qty: 999 \}]} \\
+\textbf{Mock:} productA has stock, productB has only 5 \\
+\textbf{Expected:} Error thrown on productB; \textbf{NO} reservation made for productA \\
+\textbf{Note:} Tests fail-fast behaviour before any DB writes \\
+\textbf{Coverage:} Partial failure rollback (atomicity check)
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-009 \hfill \pone}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} Tax, shipping, discount all provided \\
+\textbf{Input:} \texttt{subtotal=100, tax=10, shipping=5, discount=15} \\
+\textbf{Expected:} $\text{total} = 100 + 10 + 5 - 15 = 100$ \\
+\textbf{Coverage:} Total calculation formula
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-010 \hfill \ptwo}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} Tax and shipping are 0 (falsy) \\
+\textbf{Input:} \texttt{tax=0, shipping=0, discount=0} \\
+\textbf{Internal:} \texttt{tax > 0} is \texttt{false} $\to$ stored as \texttt{null} \\
+\textbf{Expected:} \texttt{order.tax = null}, \texttt{order.shipping = null}, \texttt{order.discount = null} \\
+\textbf{Coverage:} Falsy-to-null conversion branches
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-011 \hfill \pone}]
+\textbf{Function:} \texttt{createOrder} \\
+\textbf{Scenario:} Verify \texttt{reservedQuantity} incremented after order creation \\
+\textbf{Input:} Single item, \texttt{quantity = 3} \\
+\textbf{Mock:} \texttt{product.reservedQuantity = 5} before order \\
+\textbf{Expected:} After \texttt{createOrder}, \texttt{product.reservedQuantity = 8} \\
+\textbf{Coverage:} Stock reservation side effect
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-012 \hfill \pone}]
+\textbf{Route:} \texttt{GET /api/orders} \\
+\textbf{Scenario:} Unauthenticated request (no session cookie) \\
+\textbf{Mock:} \texttt{getSessionFromRequest} returns \texttt{null} \\
+\textbf{Expected:} \texttt{\{ error: "Unauthorized" \}}, status \textbf{401} \\
+\textbf{Coverage:} Auth guard branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-013 \hfill \ptwo}]
+\textbf{Route:} \texttt{GET /api/orders} \\
+\textbf{Scenario:} Supplier role with no supplier record \\
+\textbf{Mock:} \texttt{session.role = "supplier"}, \texttt{getSupplierByUserId} returns \texttt{null} \\
+\textbf{Expected:} \texttt{NextResponse.json([])} --- empty array, not error \\
+\textbf{Coverage:} Supplier without record branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-014 \hfill \ptwo}]
+\textbf{Route:} \texttt{GET /api/orders} \\
+\textbf{Scenario:} Cache hit for orders list \\
+\textbf{Mock:} \texttt{getCache} returns cached array \\
+\textbf{Expected:} Returns cached data without DB query \\
+\textbf{Coverage:} Cache hit branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-015 \hfill \pone}]
+\textbf{Route:} \texttt{GET /api/orders} \\
+\textbf{Scenario:} Client role fetches only their orders \\
+\textbf{Mock:} \texttt{session.role = "client"}, \texttt{session.id = "clientUserId"} \\
+\textbf{Expected:} \texttt{getOrdersByClientId} called with \texttt{"clientUserId"} \\
+\textbf{Coverage:} Role-based query branching (client)
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={ORD-016 \hfill \ptwo}]
+\textbf{Route:} \texttt{GET /api/orders} \\
+\textbf{Scenario:} Rate limit exceeded \\
+\textbf{Mock:} \texttt{withRateLimit} returns a 429 response \\
+\textbf{Expected:} 429 response returned immediately, no DB query \\
+\textbf{Coverage:} Rate limit early return branch
+\end{tcolorbox}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\section{White Box: Module 3: Invoice Generation \& Financial Logic}
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\textbf{Source Files:} \texttt{prisma/invoice.ts}, \texttt{app/api/invoices/route.ts}
+
+\section{Internal Logic Walkthrough}
+
+\subsection{createInvoice Control Flow Diagram}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=1.0cm]
+
+  \node[startstop] (start) {createInvoice(data, userId)};
+  \node[decision, below=of start] (d1) {Order exists in DB?};
+  \node[terminal, right=3.5cm of d1] (err1) {throw Error \\ ``Order not found''};
+  \node[decision, below=of d1] (d2) {Invoice already exists \\ for this orderId?};
+  \node[terminal, right=3.5cm of d2] (err2) {throw Error \\ ``Invoice already exists''};
+  \node[process, below=of d2] (gennum) {generateInvoiceNumber()};
+  \node[process, below=of gennum] (calc) {Calculate: subtotal, tax, shipping, \\ discount, total = max(0, ...)};
+  \node[process, below=of calc] (amounts) {amountPaid = 0 \\ amountDue = total};
+  \node[process, below=of amounts] (create) {prisma.invoice.create \\ status = ``draft''};
+  \node[terminal, below=of create] (ret) {return invoice};
+
+  \draw[arrow] (start) -- (d1);
+  \draw[arrow] (d1) -- node[no, above]{No} (err1);
+  \draw[arrow] (d1) -- node[yes, right]{Yes} (d2);
+  \draw[arrow] (d2) -- node[yes, above]{Yes} (err2);
+  \draw[arrow] (d2) -- node[no, right]{No} (gennum);
+  \draw[arrow] (gennum) -- (calc);
+  \draw[arrow] (calc) -- (amounts);
+  \draw[arrow] (amounts) -- (create);
+  \draw[arrow] (create) -- (ret);
+
+\end{tikzpicture}
+\caption{createInvoice complete control flow}
+\end{figure}
+
+\subsection{generateInvoiceNumber Uniqueness Loop}
+
+\begin{figure}[h!]
+\centering
+\begin{tikzpicture}[node distance=1.1cm]
+
+  \node[startstop] (start) {generateInvoiceNumber()};
+  \node[process, below=of start] (gen) {Generate: INV-YYYYMMDD-HHMMSS-XXXX \\ (random 4-digit suffix)};
+  \node[decision, below=of gen] (d1) {invoiceNumber exists \\ in DB?};
+  \node[process, right=3.5cm of d1] (regen) {Generate new \\ random suffix};
+  \node[terminal, below=of d1] (ret) {return invoiceNumber};
+
+  \draw[arrow] (start) -- (gen);
+  \draw[arrow] (gen) -- (d1);
+  \draw[arrow] (d1) -- node[yes, above]{Yes (collision)} (regen);
+  \draw[arrow] (regen) |- (gen);
+  \draw[arrow] (d1) -- node[no, right]{No (unique)} (ret);
+
+\end{tikzpicture}
+\caption{Invoice number uniqueness loop (collision probability = 1/9000)}
+\end{figure}
+
+\subsection{Nullish Coalescing Chain for Tax/Shipping/Discount}
+
+\begin{tcolorbox}[infobox, title={Critical: \texttt{??} vs \texttt{||} Operator}]
+The invoice uses \textbf{nullish coalescing} (\texttt{??}) not logical OR (\texttt{||}).
+This means an explicit \texttt{0} from \texttt{data.tax} is \textbf{respected} and does NOT
+fall back to \texttt{order.tax}. Only \texttt{null} or \texttt{undefined} trigger the fallback.
+
+\medskip
+\texttt{tax = data.tax ?? order.tax ?? 0}
+
+\begin{center}
+\begin{tabular}{lll}
+  \toprule
+  \texttt{data.tax} & \texttt{order.tax} & \textbf{Result} \\
+  \midrule
+  \texttt{20}        & \texttt{15}        & \texttt{20} (data wins) \\
+  \texttt{0}         & \texttt{15}        & \texttt{0}  (explicit zero respected) \\
+  \texttt{undefined} & \texttt{15}        & \texttt{15} (fallback to order) \\
+  \texttt{null}      & \texttt{15}        & \texttt{15} (fallback to order) \\
+  \texttt{null}      & \texttt{null}      & \texttt{0}  (final fallback) \\
+  \bottomrule
+\end{tabular}
+\end{center}
+\end{tcolorbox}
+
+\section{Test Cases --- Invoice Generation}
+
+\begin{tcolorbox}[testbox, title={INV-001 \hfill \ptwo}]
+\textbf{Function:} \texttt{generateInvoiceNumber} \\
+\textbf{Scenario:} No collision (first attempt is unique) \\
+\textbf{Mock:} \texttt{prisma.invoice.findUnique} returns \texttt{null} on first call \\
+\textbf{Expected:} Returns \texttt{INV-YYYYMMDD-HHMMSS-XXXX} format; while loop executes once \\
+\textbf{Coverage:} Happy path, no collision
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-002 \hfill \ptwo}]
+\textbf{Function:} \texttt{generateInvoiceNumber} \\
+\textbf{Scenario:} First attempt collides, second is unique \\
+\textbf{Mock:} \texttt{findUnique} returns existing invoice on call 1, \texttt{null} on call 2 \\
+\textbf{Expected:} While loop executes twice, returns second generated number \\
+\textbf{Coverage:} Collision handling branch (while loop iteration)
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-003 \hfill \ptwo}]
+\textbf{Function:} \texttt{generateInvoiceNumber} \\
+\textbf{Scenario:} Verify format structure \\
+\textbf{Expected:} Result matches regex \texttt{/\^{}INV-\textbackslash d\{8\}-\textbackslash d\{6\}-\textbackslash d\{4\}\$/} \\
+\textbf{Coverage:} Output format validation
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={INV-004 \hfill \pone\ --- Order Not Found}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} Order not found \\
+\textbf{Input:} \texttt{data.orderId = "nonexistent"} \\
+\textbf{Mock:} \texttt{prisma.order.findUnique} returns \texttt{null} \\
+\textbf{Expected:} \texttt{throw Error("Order with ID nonexistent not found")} \\
+\textbf{Coverage:} Order not found branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={INV-005 \hfill \pone\ --- Duplicate Invoice}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} Invoice already exists for this order \\
+\textbf{Mock:} \texttt{prisma.invoice.findUnique} returns existing invoice \\
+\textbf{Expected:} \texttt{throw Error("Invoice already exists for order \{orderId\}")} \\
+\textbf{Coverage:} Duplicate invoice prevention branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-006 \hfill \pone}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} Total calculation with all fields \\
+\textbf{Input:} \texttt{subtotal=200, tax=20, shipping=10, discount=30} \\
+\textbf{Expected:} $\text{total} = \max(0,\; 200 + 20 + 10 - 30) = 200$ \\
+\textbf{Coverage:} Total formula
+\end{tcolorbox}
+
+\begin{tcolorbox}[criticalbox, title={INV-007 \hfill \pone\ --- Negative Total Prevention}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} Discount exceeds subtotal + tax + shipping \\
+\textbf{Input:} \texttt{subtotal=50, tax=5, shipping=5, discount=100} \\
+\textbf{Expected:} $\text{total} = \max(0,\; 50 + 5 + 5 - 100) = \max(0, -40) = 0$ \\
+\textbf{Coverage:} \texttt{Math.max(0, ...)} negative prevention branch
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-008 \hfill \ptwo}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} \texttt{data.tax} is \texttt{0} (explicit zero, not null) \\
+\textbf{Input:} \texttt{data.tax = 0}, \texttt{order.tax = 15} \\
+\textbf{Internal:} \texttt{tax = 0 ?? 15 = 0} \\
+\textbf{Expected:} \texttt{tax = 0} (data value respected, not overridden by \texttt{order.tax}) \\
+\textbf{Coverage:} Nullish coalescing vs OR operator distinction
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-009 \hfill \ptwo}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} \texttt{data.tax} is \texttt{undefined}, \texttt{order.tax} is \texttt{15} \\
+\textbf{Internal:} \texttt{tax = undefined ?? 15 ?? 0 = 15} \\
+\textbf{Expected:} \texttt{tax = 15} (falls back to \texttt{order.tax}) \\
+\textbf{Coverage:} Fallback chain in nullish coalescing
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-010 \hfill \ptwo}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} Both \texttt{data.tax} and \texttt{order.tax} are \texttt{null} \\
+\textbf{Internal:} \texttt{tax = null ?? null ?? 0 = 0} \\
+\textbf{Expected:} \texttt{tax = 0} (final fallback) \\
+\textbf{Coverage:} Double null fallback
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-011 \hfill \pone}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} \texttt{amountPaid} always starts at 0 \\
+\textbf{Expected:} \texttt{invoice.amountPaid = 0} regardless of input; \texttt{invoice.amountDue = invoice.total} \\
+\textbf{Coverage:} Initial payment state
+\end{tcolorbox}
+
+\begin{tcolorbox}[testbox, title={INV-012 \hfill \pone}]
+\textbf{Function:} \texttt{createInvoice} \\
+\textbf{Scenario:} Invoice status always starts as \texttt{"draft"} \\
+\textbf{Expected:} \texttt{invoice.status = "draft"} \\
+\textbf{Coverage:} Default status branch
+\end{tcolorbox}
+
+
+% ══════════════════════════════════════════════════════════════════════════════
+
+\end{document}

@@ -166,7 +166,7 @@
 
 \chapter*{Abstract}
 \addcontentsline{toc}{chapter}{Abstract}
-This project presents the design and implementation of a web-based Inventory and Supply Chain Management System (Stockly) developed to simplify and modernize the process of inventory tracking, order management, and supply chain operations. Traditional inventory methods are often time-consuming, error-prone, and inefficient. The proposed system provides a secure and automated digital solution that enhances accuracy, transparency, and ease of use.
+This project presents the design and implementation of a web-based Inventory and Supply Chain Management System (The System) developed to simplify and modernize the process of inventory tracking, order management, and supply chain operations. Traditional inventory methods are often time-consuming, error-prone, and inefficient. The proposed system provides a secure and automated digital solution that enhances accuracy, transparency, and ease of use.
 
 The system is built with a role-based architecture consisting of multiple users including Admin, Supplier, Retailer, and Client. Users can manage products, coordinate stock allocations across various warehouses, generate comprehensive invoices, and manage orders with integrated stock reservation logic. 
 
@@ -196,12 +196,12 @@ Finally, we would like to thank our institution for providing us with the necess
 
 \section{Project Overview}
 
-Stockly is a production-grade, full-stack inventory and supply chain management system developed to address the operational challenges faced by small-to-medium enterprises (SMEs) engaged in product distribution, warehousing, and retail. The platform consolidates product management, order processing, invoice generation, supplier coordination, warehouse tracking, customer support, and business analytics into a single, cohesive web application accessible from any modern browser.
+The System is a production-grade, full-stack inventory and supply chain management system developed to address the operational challenges faced by small-to-medium enterprises (SMEs) engaged in product distribution, warehousing, and retail. The platform consolidates product management, order processing, invoice generation, supplier coordination, warehouse tracking, customer support, and business analytics into a single, cohesive web application accessible from any modern browser.
 
-The system is publicly accessible at \url{https://stockly-inventory.vercel.app} and is open-sourced under the MIT license. It is built with a technology stack chosen for developer productivity, runtime performance, and long-term maintainability.
+The system is publicly accessible at \url{https://The System-inventory.vercel.app} and is open-sourced under the MIT license. It is built with a technology stack chosen for developer productivity, runtime performance, and long-term maintainability.
 
 \begin{tcolorbox}[infobox,title={Three-Role Architecture}]
-Unlike traditional inventory tools that serve a single user type, Stockly provides \textbf{three fully distinct role-based experiences} within a single application:
+Unlike traditional inventory tools that serve a single user type, The System provides \textbf{three fully distinct role-based experiences} within a single application:
 \begin{itemize}[leftmargin=1.5em]
   \item \textbf{Admin (Store Owner):} Complete system control --- products, orders, invoices, warehouses, users, analytics, and portal oversight of both clients and suppliers.
   \item \textbf{Supplier:} Scoped view of their own products, associated orders, revenue metrics, low-stock alerts, and support tickets.
@@ -213,7 +213,7 @@ The application follows the \textbf{Next.js 16 App Router} paradigm, where both 
 
 \section{Purpose}
 
-The primary purpose of Stockly is to eliminate the inefficiencies of manual or spreadsheet-based inventory management by providing a unified digital platform with the following capabilities:
+The primary purpose of The System is to eliminate the inefficiencies of manual or spreadsheet-based inventory management by providing a unified digital platform with the following capabilities:
 
 \begin{enumerate}[leftmargin=1.5em]
   \item \textbf{Real-time stock visibility:} Automatic computation of available stock using the formula $\text{availableStock} = \text{quantity} - \text{reservedQuantity}$, with status labels (available, stock low, out of stock) updated dynamically.
@@ -222,7 +222,7 @@ The primary purpose of Stockly is to eliminate the inefficiencies of manual or s
   \item \textbf{Demand forecasting:} Statistical analysis of historical sales data (moving averages, standard deviation, linear regression) predicts future stock requirements and generates reorder recommendations.
   \item \textbf{Multi-role access control:} JWT-based authentication with role-based query filtering ensures data isolation between clients, suppliers, and administrators.
   \item \textbf{Operational transparency:} Comprehensive audit logs, activity history, and import history provide a full trail of all system changes.
-  \item \textbf{Extensible integrations:} The system is designed so the core application runs with only three environment variables, with all integrations (Stripe, Shippo, Brevo, etc.) being optional and gracefully degraded when not configured.
+  \item \textbf{Extensible integrations:} The system is designed so the core application runs with only three environment variables, with all integrations (Stripe, Shippo, Brevo, and so forth.) being optional and gracefully degraded when not configured.
 \end{enumerate}
 
 \section{Scope}
@@ -296,7 +296,7 @@ The scope of this project encompasses the following functional domains:
 
 \section{Software Requirements Specification (SRS)}
 
-This chapter presents the formal Software Requirements Specification for Stockly. Requirements are classified as Functional (FR) or Non-Functional (NFR) and prioritized using the MoSCoW method (Must Have, Should Have, Could Have, Won't Have).
+This chapter presents the formal Software Requirements Specification for The System. Requirements are classified as Functional (FR) or Non-Functional (NFR) and prioritized using the MoSCoW method (Must Have, Should Have, Could Have, Won't Have).
 
 \section{Stakeholders and User Roles}
 
@@ -497,7 +497,7 @@ This chapter presents the formal Software Requirements Specification for Stockly
 
 \section{System Architecture Overview}
 
-Stockly follows a \textbf{monolithic full-stack architecture} using the Next.js 16 App Router, where the frontend and backend coexist in a single deployable unit. This approach simplifies deployment, eliminates cross-origin complexity, and enables efficient server-side rendering.
+The System follows a \textbf{monolithic full-stack architecture} using the Next.js 16 App Router, where the frontend and backend coexist in a single deployable unit. This approach simplifies deployment, eliminates cross-origin complexity, and enables efficient server-side rendering.
 
 \begin{figure}[h!]
 \centering
@@ -524,7 +524,7 @@ Stockly follows a \textbf{monolithic full-stack architecture} using the Next.js 
   \draw[arrow] (cache) -- (upstash);
   \draw[arrow] (services) -- (ext);
 \end{tikzpicture}
-\caption{High-level system architecture of Stockly}
+\caption{High-level system architecture of The System}
 \end{figure}
 
 \section{Project Directory Structure}
@@ -691,7 +691,7 @@ The frontend follows a layered component architecture:
   \item \textbf{Layout Components:} \texttt{Navbar}, \texttt{AdminSidebar}, \texttt{PageWithSidebar} --- provide the structural shell for each role's experience.
   \item \textbf{Page Components:} Located in \texttt{components/Pages/} --- orchestrate data fetching and compose domain components.
   \item \textbf{Domain Components:} Located in \texttt{components/[domain]/} --- e.g., \texttt{ProductList}, \texttt{OrderDialog}, \texttt{InvoiceTable} --- handle domain-specific UI and interactions.
-  \item \textbf{UI Primitives:} Located in \texttt{components/ui/} --- shadcn/ui components (Button, Dialog, Table, Badge, etc.) built on Radix UI for accessibility.
+  \item \textbf{UI Primitives:} Located in \texttt{components/ui/} --- shadcn/ui components (Button, Dialog, Table, Badge, and so forth.) built on Radix UI for accessibility.
   \item \textbf{Shared Components:} \texttt{ErrorBoundary}, \texttt{PaginationSelector}, \texttt{LoadingSpinner} --- reused across domains.
 \end{itemize}
 
@@ -1088,7 +1088,7 @@ Users can configure their email preferences per notification type via \texttt{GE
 
 \subsection{JWT Token Lifecycle}
 
-The JWT token lifecycle in Stockly follows a strict server-side-only pattern. The \texttt{jsonwebtoken} library is dynamically imported using \texttt{require()} inside the \texttt{verifyToken} function rather than a top-level \texttt{import}. This is a deliberate architectural decision to prevent the library from being bundled into client-side JavaScript, which would expose the JWT implementation details and potentially the secret to the browser.
+The JWT token lifecycle in The System follows a strict server-side-only pattern. The \texttt{jsonwebtoken} library is dynamically imported using \texttt{require()} inside the \texttt{verifyToken} function rather than a top-level \texttt{import}. This is a deliberate architectural decision to prevent the library from being bundled into client-side JavaScript, which would expose the JWT implementation details and potentially the secret to the browser.
 
 The token payload contains only the \texttt{userId} field --- a minimal payload that reduces token size and avoids storing sensitive user data in the token itself. On each authenticated request, the server extracts the \texttt{userId} from the token and performs a fresh database lookup to get the current user state. This means that role changes, account deactivation, or other user updates take effect immediately on the next request, without requiring token invalidation.
 
@@ -1365,7 +1365,7 @@ The 70/30 weighting was chosen empirically to balance responsiveness to recent t
 
 \subsection{Defense in Depth}
 
-Stockly implements multiple layers of security:
+The System implements multiple layers of security:
 
 \begin{enumerate}[leftmargin=1.5em]
   \item \textbf{Transport Security:} All production traffic uses HTTPS (enforced by Vercel). The \texttt{session\_id} cookie has the \texttt{Secure} flag set in production.
@@ -1667,15 +1667,15 @@ Settings are cached in Redis with a 10-minute TTL to avoid repeated database que
 % â”€â”€â”€ Hyperref â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 \hypersetup{
   colorlinks=true, linkcolor=primary, urlcolor=secondary, citecolor=accent,
-  pdftitle={Stockly -- Comprehensive Project Report},
-  pdfauthor={Stockly Engineering Team},
+  pdftitle={The System -- Comprehensive Project Report},
+  pdfauthor={The System Engineering Team},
   pdfsubject={Software Engineering Project Report},
 }
 
 % â”€â”€â”€ Header / Footer â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 \pagestyle{fancy}
 \fancyhf{}
-\fancyhead[L]{\small\color{primary}\textbf{Stockly} --- Inventory \& Supply Chain Management}
+\fancyhead[L]{\small\color{primary}\textbf{The System} --- Inventory \& Supply Chain Management}
 \fancyhead[R]{\small\color{darkgray}v2.0.1 $\cdot$ April 2026}
 \fancyfoot[C]{\small\color{darkgray}\thepage}
 \renewcommand{\headrulewidth}{0.4pt}
@@ -1767,7 +1767,7 @@ Settings are cached in Redis with a 10-minute TTL to avoid repeated database que
   \vspace*{1.2cm}
   {\fontsize{11}{14}\selectfont\texttt{\color{secondary}SOFTWARE ENGINEERING PROJECT REPORT}}\\[0.4cm]
   \rule{14cm}{0.5pt}\\[0.9cm]
-  {\fontsize{44}{54}\selectfont\bfseries\color{white}Stockly}\\[0.3cm]
+  {\fontsize{44}{54}\selectfont\bfseries\color{white}The System}\\[0.3cm]
   {\fontsize{17}{22}\selectfont\color{secondary}Inventory \& Supply Chain Management System}\\[0.7cm]
   \rule{14cm}{0.5pt}\\[0.9cm]
   {\large\itshape\color{white!85}
@@ -1780,7 +1780,7 @@ Settings are cached in Redis with a 10-minute TTL to avoid repeated database que
     \textbf{\color{secondary}Framework:}       & \color{white}Next.js 16 (App Router), React 19 \\[4pt]
     \textbf{\color{secondary}Language:}        & \color{white}TypeScript 5 (strict mode) \\[4pt]
     \textbf{\color{secondary}Database:}        & \color{white}MongoDB via Prisma ORM 6.4 \\[4pt]
-    \textbf{\color{secondary}Live Demo:}       & \color{secondary}\url{https://stockly-inventory.vercel.app} \\[4pt]
+    \textbf{\color{secondary}Live Demo:}       & \color{secondary}\url{https://The System-inventory.vercel.app} \\[4pt]
     \textbf{\color{secondary}License:}         & \color{white}MIT Open Source \\[4pt]
     \textbf{\color{secondary}Report Type:}     & \color{white}SRS + Architecture + White-Box Testing \\[4pt]
     \textbf{\color{secondary}Test Cases:}      & \color{white}107 across 10 modules \\[4pt]
@@ -1800,10 +1800,10 @@ Settings are cached in Redis with a 10-minute TTL to avoid repeated database que
 \addcontentsline{toc}{chapter}{Abstract}
 
 \begin{tcolorbox}[infobox,title={Executive Summary}]
-Stockly is a production-grade, role-based inventory and supply chain management platform that consolidates product management, order processing, invoice generation, warehouse tracking, supplier coordination, customer support, and business analytics into a single cohesive web application. The system serves three distinct user roles --- administrators, suppliers, and clients --- each with tailored dashboards and access controls enforced at both the API and UI layers.
+The System is a production-grade, role-based inventory and supply chain management platform that consolidates product management, order processing, invoice generation, warehouse tracking, supplier coordination, customer support, and business analytics into a single cohesive web application. The system serves three distinct user roles --- administrators, suppliers, and clients --- each with tailored dashboards and access controls enforced at both the API and UI layers.
 \end{tcolorbox}
 
-This report presents the complete software engineering documentation for Stockly v2.0.1. It covers the Software Requirements Specification (SRS) with functional and non-functional requirements, system architecture and data model design, implementation details of critical algorithms and integrations, a comprehensive white-box testing strategy with 107 documented test cases across 10 modules, deployment procedures for both local and cloud environments, and a future development roadmap.
+This report presents the complete software engineering documentation for The System v2.0.1. It covers the Software Requirements Specification (SRS) with functional and non-functional requirements, system architecture and data model design, implementation details of critical algorithms and integrations, a comprehensive white-box testing strategy with 107 documented test cases across 10 modules, deployment procedures for both local and cloud environments, and a future development roadmap.
 
 The platform is built on a modern full-stack architecture: \textbf{Next.js 16} with the App Router paradigm for server-side rendering and API routes, \textbf{TypeScript 5} in strict mode for end-to-end type safety, \textbf{Prisma ORM 6.4} with \textbf{MongoDB} as the persistence layer, and \textbf{JWT-based authentication} with \textbf{bcryptjs} for secure session management. Optional integrations include Stripe (payments), Shippo (shipping), Brevo (transactional email), ImageKit (media), Upstash Redis (caching and rate limiting), Sentry (error monitoring), and OpenRouter (AI insights).
 
@@ -1822,7 +1822,7 @@ The core business logic encompasses product lifecycle management with SKU tracki
 \chapter{Project Management and Development Process}
 \section{Development Methodology}
 
-Stockly was developed following an iterative Agile methodology with two-week sprints. The development process was organized into the following phases:
+The System was developed following an iterative Agile methodology with two-week sprints. The development process was organized into the following phases:
 
 \begin{enumerate}[leftmargin=1.5em]
   \item \textbf{Phase 1 --- Foundation (Weeks 1--2):} Project setup, database schema design, authentication system, basic CRUD for products and categories.
@@ -2930,7 +2930,7 @@ npm run dev
 
 \subsection{Index Strategy}
 
-MongoDB indexes are critical for query performance. The Stockly schema defines the following indexes:
+MongoDB indexes are critical for query performance. The System schema defines the following indexes:
 
 \begin{center}
 \begin{longtable}{llp{6cm}}
@@ -3062,7 +3062,7 @@ All API errors follow a consistent response format:
   401 & Unauthorized      & Missing or invalid session token \\
   403 & Forbidden         & Authenticated but insufficient role \\
   404 & Not Found         & Resource does not exist \\
-  409 & Conflict          & Duplicate resource (email, SKU, etc.) \\
+  409 & Conflict          & Duplicate resource (email, SKU, and so forth.) \\
   422 & Unprocessable     & Business logic violation (insufficient stock) \\
   429 & Too Many Requests & Rate limit exceeded \\
   500 & Internal Server   & Unexpected server error \\
@@ -3349,7 +3349,7 @@ knowledge of the source code.
   \draw[arrow] (email) -- (stripe);
 
 \end{tikzpicture}
-\caption{High-level system architecture of Stockly}
+\caption{High-level system architecture of The System}
 \end{figure}
 
 
@@ -4616,7 +4616,7 @@ This is a documented architectural risk. \\
 \begin{tcolorbox}[testbox, title={DB-008 \hfill \ptwo}]
 \textbf{Scenario:} Audit log failure does not break main operation \\
 \textbf{Mock:} \texttt{createAuditLog} throws an error \\
-\textbf{Expected:} Main operation (order create, etc.) still succeeds \\
+\textbf{Expected:} Main operation (order create, and so forth.) still succeeds \\
 \textbf{Coverage:} Audit log error isolation (fire-and-forget)
 \end{tcolorbox}
 
@@ -5720,7 +5720,7 @@ model Order {
 \chapter{Conclusion and Future Work}
 \section{Conclusion}
 
-Stockly represents a comprehensive, production-ready solution to the challenges of modern inventory and supply chain management. The system successfully delivers on its core objectives: providing real-time stock visibility, automating order-to-invoice workflows, enforcing financial integrity, and delivering actionable business intelligence through integrated analytics and AI-assisted forecasting.
+The System represents a comprehensive, production-ready solution to the challenges of modern inventory and supply chain management. The system successfully delivers on its core objectives: providing real-time stock visibility, automating order-to-invoice workflows, enforcing financial integrity, and delivering actionable business intelligence through integrated analytics and AI-assisted forecasting.
 
 The architecture choices made throughout the project --- Next.js 16 App Router for unified full-stack development, Prisma ORM for type-safe database access, JWT-based authentication with httpOnly cookies for security, and TanStack Query for efficient server state management --- have proven effective in delivering a maintainable, scalable, and performant application.
 
@@ -5729,7 +5729,7 @@ The architecture choices made throughout the project --- Next.js 16 App Router f
   \item \textbf{Role-Based Architecture:} Three fully distinct user experiences (Admin, Supplier, Client) within a single application, with data isolation enforced at both API and database layers.
   \item \textbf{Financial Integrity:} Invoice calculations with negative-total prevention (\texttt{Math.max(0,...)}), nullish coalescing for explicit zero values, and atomic stock reservation semantics.
   \item \textbf{Comprehensive Testing:} 107 documented white-box test cases across 10 modules, targeting 85\% statement coverage and 90\% branch coverage, with special emphasis on security-critical paths.
-  \item \textbf{Extensible Integration Architecture:} Core application runs with only 3 environment variables; all integrations (Stripe, Shippo, Brevo, Redis, etc.) are optional and gracefully degraded.
+  \item \textbf{Extensible Integration Architecture:} Core application runs with only 3 environment variables; all integrations (Stripe, Shippo, Brevo, Redis, and so forth.) are optional and gracefully degraded.
   \item \textbf{Statistical Forecasting:} Demand forecasting engine using moving averages, standard deviation, linear regression, and z-score anomaly detection provides actionable reorder recommendations.
   \item \textbf{Production Deployment:} Successfully deployed on Vercel with MongoDB Atlas, achieving the target availability and performance metrics.
 \end{itemize}
@@ -5787,11 +5787,11 @@ The SRS documented in Chapter 2 establishes clear, measurable requirements that 
 
 \section{Final Remarks}
 
-Stockly demonstrates that a modern full-stack application built with Next.js, TypeScript, Prisma, and MongoDB can deliver enterprise-grade functionality with a lean, maintainable codebase. The combination of strong typing, schema validation, role-based access control, and comprehensive white-box testing provides a solid foundation for a production system that handles real financial transactions and inventory data.
+The System demonstrates that a modern full-stack application built with Next.js, TypeScript, Prisma, and MongoDB can deliver enterprise-grade functionality with a lean, maintainable codebase. The combination of strong typing, schema validation, role-based access control, and comprehensive white-box testing provides a solid foundation for a production system that handles real financial transactions and inventory data.
 
 The open-source nature of the project (MIT license) and the comprehensive documentation in this report make it an excellent reference implementation for developers building similar systems. The architecture patterns, testing strategies, and integration approaches documented here are applicable to a wide range of full-stack web applications beyond inventory management.
 
-The live demo at \url{https://stockly-inventory.vercel.app} demonstrates the system in action, and the source code is available for learning, reuse, and contribution.
+The live demo at \url{https://The System-inventory.vercel.app} demonstrates the system in action, and the source code is available for learning, reuse, and contribution.
 
 
 

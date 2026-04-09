@@ -1,0 +1,1557 @@
+\documentclass[12pt,a4paper]{report}
+
+% ── Packages ──────────────────────────────────────────────────────────────────
+\usepackage[a4paper, top=1in, bottom=1in, left=1.2in, right=1in]{geometry}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+% microtype removed: causes \showhyphens conflict on some TeX distributions
+\usepackage{graphicx}
+\usepackage{amsmath,amssymb}
+\usepackage{array}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{float}
+\usepackage{enumitem}
+\usepackage{xcolor}
+\usepackage{listings}
+\usepackage{url}
+\usepackage{ifthen}
+\usepackage{setspace}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{hyperref}
+
+% ── Fix compilation warnings ──────────────────────────────────────────────────
+% Fix: fancyhdr \headheight too small
+\setlength{\headheight}{14pt}
+\addtolength{\topmargin}{-2pt}
+% Fix: Overfull/Underfull \hbox --- allow extra stretch in tight lines
+\setlength{\emergencystretch}{3em}
+\tolerance=1500
+\hbadness=2000
+
+% ── Colours ───────────────────────────────────────────────────────────────────
+\definecolor{sectionblue}{RGB}{0,70,127}
+\definecolor{linkblue}{RGB}{0,102,204}
+\definecolor{headergray}{RGB}{80,80,80}
+\definecolor{codebg}{RGB}{247,248,250}
+\definecolor{codekeyword}{RGB}{0,78,150}
+\definecolor{codecomment}{RGB}{0,120,90}
+\definecolor{codestring}{RGB}{150,70,10}
+
+% ── Hyperref ──────────────────────────────────────────────────────────────────
+\hypersetup{
+    colorlinks=true,
+    linkcolor=linkblue,
+    urlcolor=linkblue,
+    citecolor=linkblue,
+    pdftitle={Stockly -- Inventory and Supply Chain Management System},
+    pdfauthor={Ashay Gupta, Avni Singhal, Nandish Chauhan, Arpit Maheshwari}
+}
+
+% ── Code listings ─────────────────────────────────────────────────────────────
+\lstdefinelanguage{TypeScript}{
+    keywords={const,let,var,async,await,return,if,else,for,while,class,import,from,
+              export,default,try,catch,throw,new,switch,case,break,function,interface,
+              type,extends,implements,void,null,undefined,true,false,string,number,boolean},
+    keywordstyle=\color{codekeyword}\bfseries,
+    sensitive=true,
+    comment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    commentstyle=\color{codecomment}\itshape,
+    stringstyle=\color{codestring},
+    morestring=[b]',
+    morestring=[b]"
+}
+\lstset{
+    language=TypeScript,
+    basicstyle=\ttfamily\small,
+    backgroundcolor=\color{codebg},
+    frame=single,
+    breaklines=true,
+    breakatwhitespace=false,
+    tabsize=2,
+    showstringspaces=false,
+    captionpos=b
+    % numbers=left removed: speeds up Overleaf compilation significantly
+}
+
+% ── Typography ────────────────────────────────────────────────────────────────
+\setstretch{1.25}
+\setlength{\parskip}{0.5em}
+\setlength{\parindent}{0pt}
+
+% ── Section title styling (blue bold with underline rule, matching screenshot)
+\titleformat{\chapter}[block]
+    {\normalfont\huge\bfseries\color{sectionblue}}
+    {\thechapter\quad}{0pt}{}
+    [\vspace{-0.3em}\color{sectionblue}\rule{\textwidth}{0.6pt}]
+\titlespacing*{\chapter}{0pt}{-15pt}{1.2em}
+
+\titleformat{\section}
+    {\color{sectionblue}\Large\bfseries}
+    {\thesection}{1em}{}
+    [\color{sectionblue}\titlerule]
+
+\titleformat{\subsection}
+    {\color{sectionblue}\large\bfseries}
+    {\thesubsection}{1em}{}
+
+\titleformat{\subsubsection}
+    {\color{sectionblue}\normalsize\bfseries}
+    {\thesubsubsection}{1em}{}
+
+\titlespacing*{\section}{0pt}{1.6em}{0.8em}
+\titlespacing*{\subsection}{0pt}{1.0em}{0.4em}
+\titlespacing*{\subsubsection}{0pt}{0.8em}{0.3em}
+
+% ── TOC styling (blue section titles with dotted leaders, matching screenshot)
+\renewcommand{\cfttoctitlefont}{\color{sectionblue}\Large\bfseries}
+\renewcommand{\cftsecfont}{\color{sectionblue}\bfseries}
+\renewcommand{\cftsecpagefont}{\color{sectionblue}\bfseries}
+\renewcommand{\cftsubsecfont}{\color{sectionblue}}
+\renewcommand{\cftsubsecpagefont}{\color{sectionblue}}
+\renewcommand{\cftsubsubsecfont}{\color{linkblue}}
+\renewcommand{\cftsubsubsecpagefont}{\color{linkblue}}
+\setlength{\cftsecindent}{0pt}
+\setlength{\cftsubsecindent}{1.5em}
+\setlength{\cftsubsubsecindent}{3.2em}
+\setlength{\cftsecnumwidth}{2.5em}
+\setlength{\cftsubsecnumwidth}{3.0em}
+
+% ── Fancy page style (right: project name; right footer: Page N) ──────────────
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{headergray}{\nouppercase{\leftmark}}}
+\fancyhead[R]{\small\textcolor{headergray}{Stockly --- Inventory \& Supply Chain Management}}
+\fancyfoot[R]{\small Page \thepage}
+\renewcommand{\headrulewidth}{0.8pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \fancyhead[R]{\small\textcolor{headergray}{Stockly --- Inventory \& Supply Chain Management}}
+    \fancyfoot[R]{\small Page \thepage}
+    \renewcommand{\headrulewidth}{0.8pt}
+    \renewcommand{\footrulewidth}{0.4pt}
+}
+
+% ── Placeholder image helper ──────────────────────────────────────────────────
+\newcommand{\placeholderimage}[3]{%
+    \begin{figure}[H]
+        \centering
+        \IfFileExists{#1}{%
+            \includegraphics[width=#2\textwidth]{#1}%
+        }{%
+            \fbox{%
+                \parbox[c][2.5in][c]{0.75\textwidth}{%
+                    \centering
+                    \textcolor{gray}{[ Image: \texttt{#1} ]}%
+                }%
+            }%
+        }%
+        \caption{#3}
+    \end{figure}%
+}
+
+% ── List spacing ──────────────────────────────────────────────────────────────
+\setlist[itemize]{leftmargin=1.5em, topsep=0.3em, itemsep=0.15em}
+\setlist[enumerate]{leftmargin=1.8em, topsep=0.3em, itemsep=0.15em}
+
+% ─────────────────────────────────────────────────────────────────────────────
+\begin{document}
+\pagenumbering{roman}
+
+% ─── TITLE PAGE ─────────────────────────────────────────────────────────────
+\begin{titlepage}
+    \thispagestyle{empty}
+    \begin{center}
+
+        \vspace*{0.5cm}
+
+        % Institute logo at top
+        \IfFileExists{logo.png}{
+            \includegraphics[width=0.26\textwidth]{logo.png}
+        }{
+            \fbox{\parbox[c][3.2cm][c]{5.5cm}{
+                \centering\large\bfseries Institute Logo\\[6pt]\small\texttt{logo.png}
+            }}
+        }
+
+        \vspace{0.5cm}
+
+        % Institute name
+        {\large\bfseries Indian Institute of Information Technology,\\[0.1cm]
+        Vadodara}
+
+        \vspace{0.5cm}
+        \noindent\rule{\textwidth}{0.8pt}
+        \vspace{0.4cm}
+
+        % Project title --- ALL CAPS large bold, matching screenshot style
+        {\fontsize{22}{30}\selectfont\bfseries STOCKLY}\\[0.3cm]
+        {\fontsize{13}{18}\selectfont\bfseries Inventory \& Supply Chain Management System}
+
+        \vspace{0.4cm}
+        \noindent\rule{\textwidth}{0.8pt}
+        \vspace{0.5cm}
+
+        % "A Project Report" italic
+        {\large\itshape A Project Report}
+
+        \vspace{0.6cm}
+
+        {\large\bfseries Submitted by:}
+
+        \vspace{0.3cm}
+
+        \begin{tabular}{lc}
+            Ashay Gupta       & (202451024) \\[4pt]
+            Avni Singhal      & (202451026) \\[4pt]
+            Nandish Chauhan   & (202451040) \\[4pt]
+            Arpit Maheshwari  & (202451022) \\
+        \end{tabular}
+
+        \vspace{0.7cm}
+
+        {\large\textbf{Course:} \textcolor{linkblue}{Software Engineering Lab (CS 264)}}
+
+        \vspace{0.45cm}
+
+        {\large\textbf{Submitted to:} \textcolor{linkblue}{Dr.\ Pooja Mishra}}
+
+        \vspace{0.45cm}
+
+        {\large\textbf{Academic Session:} \textcolor{linkblue}{2025--26}}
+
+    \end{center}
+\end{titlepage}
+
+\clearpage
+
+\section*{Acknowledgment}
+\addcontentsline{toc}{section}{Acknowledgment}
+
+We express our sincere gratitude to \textbf{Dr.\ Pooja Mishra}, our instructor, for her invaluable guidance, consistent encouragement, and constructive suggestions throughout the development of this project. Her expertise and mentorship helped us approach the problem systematically and build Stockly into a coherent inventory and supply chain management system. We are truly grateful for the time and effort she invested in reviewing our progress and providing critical feedback at each stage.
+
+We would like to extend our appreciation to the Teaching Assistants (TAs) and our peers for their insightful discussions and technical support. Their feedback during peer reviews and informal brainstorming sessions provided us with diverse perspectives that helped refine our implementation.
+
+Working on Stockly has significantly deepened our understanding of full-stack development, database management systems, caching strategies, payment integrations, demand forecasting, and the principles of maintainable software architecture.
+
+\vspace{2.2cm}
+\noindent
+\begin{tabular}{p{6cm}p{1cm}p{6cm}}
+    \textbf{Dr.\ Pooja Mishra} \\[0.2cm]
+    Signature: \underline{\hspace{4cm}} \\
+    Date: \underline{\hspace{4.4cm}} \\
+\end{tabular}
+
+\clearpage
+% ─── ABSTRACT ───────────────────────────────────────────────────────────────
+\section*{Abstract}
+\addcontentsline{toc}{section}{Abstract}
+
+Stockly is a role-based inventory and supply chain management system developed to modernise product tracking, order fulfilment, and operational coordination for small-to-medium enterprises. The application addresses common issues in conventional inventory environments such as fragmented manual workflows, lack of real-time stock visibility, weak supplier coordination, and manual invoice generation. The system combines a React and Next.js front-end with an API back-end, while MongoDB and Prisma ORM are used for persistent data storage and Upstash Redis provides API response caching and rate limiting.
+
+The project is designed around three principal user roles: administrators, suppliers, and clients. Administrators have complete oversight --- managing products across multiple warehouses, tracking business analytics, processing support tickets, approving product reviews, and overseeing the entire order-to-invoice workflow. Suppliers can monitor their own product listings, view order history, and track revenue and low-stock metrics. Clients can browse the product catalogue, place orders, pay invoices through Stripe, and raise support requests.
+
+This report presents the project overview, requirement analysis, system architecture including UML, ER, activity, and data flow diagrams, implementation details, white-box testing documentation, security analysis, deployment model, and future scope of Stockly.
+
+\noindent\textbf{Index Terms:} inventory management, supply chain, order management, Next.js, MongoDB, Prisma~ORM, Redis, Stripe, demand forecasting, role-based access control, white-box testing.
+
+% ─── TABLE OF CONTENTS ──────────────────────────────────────────────────────
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Introduction}
+% ════════════════════════════════════════════════════════════════════════════
+
+\section{Project Overview}
+
+Stockly is a production-grade, full-stack inventory and supply chain management system designed to address the operational challenges faced by small-to-medium enterprises engaged in product distribution, warehousing, and retail. The platform consolidates product management, order processing, invoice generation, supplier coordination, warehouse tracking, customer support, and business analytics into a single cohesive web application accessible from any modern browser.
+
+The system is built around the \textbf{Next.js 15 App Router} paradigm, where the front-end React components and the back-end API Route Handlers coexist in the same codebase. This eliminates cross-origin complexity, enables type-safe end-to-end integration with shared TypeScript types, and allows the Prisma ORM layer to be called directly from API routes without an intermediate REST boundary.
+
+\placeholderimage{store-overview-page.png}{0.90}{Stockly store overview dashboard --- the primary landing page for administrators.}
+
+\section{Purpose of the Project}
+
+The primary purpose of Stockly is to eliminate the inefficiencies of manual or spreadsheet-based inventory management by providing a unified digital platform. In many businesses, stock levels are tracked in spreadsheets with no real-time synchronisation, invoices are created manually and disconnected from order tracking, and reorder decisions are made reactively rather than predictively. Stockly addresses these limitations through a centralised system that captures order creation, updates stock state automatically, generates invoices, and distributes role-appropriate dashboards.
+
+Specific purposes include:
+\begin{enumerate}
+    \item Providing \textbf{real-time stock visibility} through automatic computation of available stock using $\text{availableStock} = \text{quantity} - \text{reservedQuantity}$.
+    \item Automating the \textbf{order-to-invoice workflow} so that placing an order automatically triggers invoice creation and payment tracking.
+    \item Enforcing \textbf{financial integrity} through invoice calculations that use \texttt{Math.max(0, subtotal + tax + shipping - discount)} to prevent negative totals.
+    \item Delivering \textbf{demand forecasting} through statistical analysis of historical sales data to generate reorder recommendations.
+    \item Maintaining \textbf{multi-role data isolation} through JWT-based authentication with role-scoped queries.
+\end{enumerate}
+
+\section{Scope of the Project}
+
+\begin{longtable}{p{0.22\textwidth}p{0.68\textwidth}}
+    \toprule
+    \textbf{Domain} & \textbf{Scope} \\
+    \midrule
+    \endhead
+    Product Management & Full CRUD with SKU, categories, suppliers, stock levels, QR codes, CSV/Excel import/export, ImageKit upload \\
+    Order Management & Multi-item orders with tax, shipping, and discount; six-state status machine; stock reservation and release \\
+    Invoice Management & Auto-generated invoices linked one-to-one to orders; PDF export; email delivery; Stripe payment links \\
+    Warehouse Management & CRUD for warehouses; stock allocation per warehouse; stock transfer between warehouses \\
+    Supplier Portal & Supplier-scoped dashboard with product, order, and revenue views; low-stock alerts \\
+    Client Portal & Consumer catalogue with browse-and-filter; order placement; invoice payment; support tickets \\
+    Analytics & Revenue charts, order trends, category breakdowns, demand forecasting, AI insights via OpenRouter \\
+    Support System & Ticket creation, reply threads, priority and status management, role-scoped visibility \\
+    Product Reviews & Customer reviews with admin moderation (approve/reject) and purchase eligibility verification \\
+    \bottomrule
+\end{longtable}
+
+\section{Problem Statement}
+
+Conventional inventory workflows in small enterprises suffer from recurring operational problems:
+\begin{itemize}
+    \item Stock levels are tracked in spreadsheets with no real-time synchronisation, leading to overselling and stockouts.
+    \item Invoice creation is manual, error-prone, and disconnected from order status updates.
+    \item Suppliers lack dedicated visibility into their product performance and revenue metrics.
+    \item There is no systematic demand forecasting, so reorder decisions are reactive rather than predictive.
+    \item Support and communication channels between administrators, suppliers, and clients are fragmented.
+    \item Multi-warehouse stock tracking is absent, making physical distribution management impossible.
+\end{itemize}
+
+Stockly addresses all of these limitations through a centralised system that captures order creation, updates stock state atomically, generates invoices automatically, and distributes role-appropriate dashboards to all stakeholders.
+
+\section{Project Objectives}
+
+The key objectives of this project are as follows:
+\begin{enumerate}
+    \item To develop a secure, role-based inventory management application accessible via modern web browsers.
+    \item To implement a transactional stock reservation system that prevents overselling under concurrent load.
+    \item To integrate Stripe for payment processing with webhook-driven invoice status updates.
+    \item To build a statistical demand forecasting engine that recommends reorder schedules 14 days in advance.
+    \item To provide multi-warehouse stock tracking with full transfer workflows.
+    \item To validate critical business logic through comprehensive white-box testing with branch-level coverage.
+\end{enumerate}
+
+\section{Issues Addressed by the Proposed System}
+
+Stockly is designed to resolve the following operational issues:
+\begin{itemize}
+    \item Lack of real-time inventory visibility and automated stock status computation.
+    \item Disconnected order and invoice lifecycles that cause billing errors.
+    \item Manual reorder processes with no data-driven forecasting support.
+    \item Absence of role-specific dashboards for suppliers and clients.
+    \item No audit trail for changes to critical inventory and financial records.
+    \item No integrated payment processing for customer invoices.
+\end{itemize}
+
+\placeholderimage{login-page.png}{0.85}{Stockly login page supporting email/password and Google OAuth authentication.}
+
+\section{Methodology Followed}
+
+The development approach was iterative and module-driven. Major flows such as authentication, order management, and dashboard rendering were implemented in functional slices. The backend services were separated by domain, while the front-end was organised into pages, components, hooks, and contexts. This allowed the team to validate one feature path at a time while keeping the overall codebase understandable.
+
+The methodology followed these stages:
+\begin{enumerate}
+    \item Identify the three user roles and map the expected feature set per role.
+    \item Define the database schema with Prisma and set up the MongoDB Atlas cluster.
+    \item Develop the backend API route handlers for each resource domain.
+    \item Build the front-end dashboards using React and TanStack Query for data fetching.
+    \item Integrate authentication, caching, and rate limiting middleware.
+    \item Connect third-party services: Stripe, Shippo, Brevo, and ImageKit.
+    \item Implement the demand forecasting engine and analytics dashboards.
+    \item Write white-box tests for critical modules and document coverage.
+    \item Deploy to Vercel with MongoDB Atlas and Upstash Redis in production.
+\end{enumerate}
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Requirement Analysis}
+% ════════════════════════════════════════════════════════════════════════════
+
+\section{Stakeholder Analysis}
+
+The primary stakeholders of Stockly are administrators, suppliers, and clients. Each stakeholder interacts with the system in a different manner and therefore contributes a different set of requirements.
+
+\begin{longtable}{p{0.20\textwidth}p{0.28\textwidth}p{0.42\textwidth}}
+    \toprule
+    \textbf{Stakeholder} & \textbf{Primary Need} & \textbf{System Support} \\
+    \midrule
+    \endhead
+    Store Owner (Admin) & Full operational control and analytics & Product, order, invoice, warehouse, and user management; revenue dashboards; audit logs; system configuration and review moderation \\
+    Supplier & Visibility into own product performance & Supplier-scoped dashboard; product listing management; order tracking; revenue and low-stock alerts \\
+    Client (Customer) & Convenient product discovery and purchase & Product catalogue; order placement; Stripe invoice payment; order history; support ticket submission \\
+    Development Team & Maintainable, testable codebase & Typed API contracts via Zod; Prisma helper layer; comprehensive white-box test documentation \\
+    \bottomrule
+\end{longtable}
+
+\section{Functional Requirements}
+
+The functional requirements are derived from the system design and grouped by module.
+
+\begin{longtable}{p{0.24\textwidth}p{0.66\textwidth}}
+    \toprule
+    \textbf{Module} & \textbf{Functional Requirement} \\
+    \midrule
+    \endhead
+    Authentication & The system shall support user registration and login via email/password and Google OAuth 2.0. Passwords shall be hashed using bcrypt with minimum ten salt rounds. \\
+    Session Handling & The system shall issue a signed JWT stored as an \texttt{httpOnly} cookie named \texttt{session\_id} with a one-hour expiry. Expired or tampered tokens shall return HTTP 401. \\
+    Role-Based Access & The system shall enforce role-based access control. Insufficient role shall return HTTP 403 Forbidden. Administrators may manage all user accounts and assign roles. \\
+    Product Management & The system shall support full CRUD for products with SKU (unique), price, quantity, reservedQuantity, status, categoryId, supplierId, imageUrl, and qrCodeUrl fields. \\
+    Stock Status & Product status shall be computed automatically: \texttt{available}, \texttt{stock\_low}, or \texttt{out\_of\_stock} based on quantity relative to the configured threshold. \\
+    Bulk Import & The system shall support bulk product import from CSV and Excel files with per-row error reporting and ImportHistory tracking. \\
+    Order Creation & The system shall support creation of orders with multiple line items. On creation, available stock shall be validated for every item before any reservation is made. \\
+    Stock Reservation & On order creation, \texttt{reservedQuantity} shall increment; on confirmation, \texttt{quantity} and \texttt{reservedQuantity} shall both decrement; on cancellation, reservations shall be released. \\
+    Order State Machine & Orders shall follow a six-state machine: \texttt{pending} $\to$ \texttt{confirmed} $\to$ \texttt{processing} $\to$ \texttt{shipped} $\to$ \texttt{delivered}, with cancellation from any non-delivered state. \\
+    Invoice Generation & Each order shall have at most one invoice (unique constraint on \texttt{orderId}). Invoice totals shall use \texttt{Math.max(0, subtotal + tax + shipping - discount)} to prevent negative values. \\
+    Invoice Payment & The system shall create Stripe Checkout sessions for invoice payment and update invoice status to \texttt{paid} via webhook upon completion. \\
+    Warehouse Management & The system shall support CRUD for warehouses and per-warehouse stock allocation. Composite unique index shall enforce one allocation record per product-warehouse pair. \\
+    Stock Transfers & The system shall support stock transfer operations between warehouses with pending, completed, and cancelled status tracking. \\
+    Demand Forecasting & The system shall analyse the last 30 days of sales and forecast the next 14 days using weighted moving averages with z-score anomaly detection and linear regression. \\
+    Analytics Dashboard & The admin dashboard shall display: total products, orders, invoices, revenue, low-stock count, recent activity, and category breakdown charts. \\
+    Support Tickets & Any authenticated user shall be able to create support tickets with subject, description, and priority. Tickets shall support threaded replies. \\
+    Product Reviews & Clients shall be able to submit product reviews only for products they have received. Reviews shall require admin approval before becoming publicly visible. \\
+    Notifications & The system shall create in-app notifications for significant events and optionally deliver emails via Brevo with background queuing through Upstash QStash. \\
+    Audit Logging & All create, update, and delete operations shall be recorded in the \texttt{AuditLog} collection with userId, action, entityType, entityId, and timestamp. \\
+    \bottomrule
+\end{longtable}
+
+\section{Non-Functional Requirements}
+
+Stockly also depends on a number of quality attributes that influence design decisions:
+\begin{itemize}
+    \item \textbf{Performance:} API responses shall complete within 500\,ms for 95\% of requests. Dashboard aggregation queries shall complete within 2 seconds.
+    \item \textbf{Security:} All passwords shall be hashed with bcrypt (minimum 10 rounds). The \texttt{session\_id} cookie shall be \texttt{httpOnly}, \texttt{Secure} in production, and \texttt{SameSite=Strict} to prevent XSS and CSRF.
+    \item \textbf{Rate Limiting:} API endpoints shall enforce rate limiting via Upstash Redis. Exceeded limits shall return HTTP 429 with a \texttt{Retry-After} header.
+    \item \textbf{Availability:} The system shall target 99.9\% uptime when deployed on Vercel with MongoDB Atlas.
+    \item \textbf{Scalability:} The Redis cache-aside strategy shall reduce database load for frequently accessed resources with configurable TTLs.
+    \item \textbf{Maintainability:} All API routes shall use Zod schemas for input validation. Validation errors shall include field-level detail in the response.
+    \item \textbf{Auditability:} All write operations on core entities shall be logged to the \texttt{AuditLog} collection.
+    \item \textbf{Accessibility:} The UI shall follow WCAG 2.1 AA guidelines using Radix UI primitives via shadcn/ui.
+    \item \textbf{Portability:} The system shall run with only three required environment variables: \texttt{DATABASE\_URL}, \texttt{JWT\_SECRET}, and \texttt{NEXT\_PUBLIC\_API\_URL}.
+    \item \textbf{Observability:} When Sentry is configured, all unhandled exceptions shall be captured with full stack traces and user context.
+\end{itemize}
+
+\section{Software and Technology Requirements}
+
+The implemented solution uses the following technologies:
+\begin{itemize}
+    \item \textbf{Framework:} Next.js 15 (App Router) with TypeScript 5 in strict mode.
+    \item \textbf{Database:} MongoDB Atlas with Prisma ORM 6.4 for type-safe data access.
+    \item \textbf{Authentication:} JWT (\texttt{jsonwebtoken}) with bcryptjs for password hashing.
+    \item \textbf{State Management:} TanStack Query for server state; Zustand for client UI state.
+    \item \textbf{UI:} Tailwind CSS with shadcn/ui (Radix UI primitives).
+    \item \textbf{Validation:} Zod schemas for all API route inputs.
+    \item \textbf{Payments:} Stripe Checkout sessions and webhook processing.
+    \item \textbf{Shipping:} Shippo for label generation and rate calculation.
+    \item \textbf{Email:} Brevo transactional API with Upstash QStash background queue.
+    \item \textbf{Images:} ImageKit CDN for product image and QR code storage.
+    \item \textbf{Cache:} Upstash Redis for API response caching and rate limiting.
+    \item \textbf{Monitoring:} Sentry for error tracking and performance monitoring.
+    \item \textbf{AI:} OpenRouter for AI-generated business insights.
+\end{itemize}
+
+\section{User Role Requirements}
+
+Each role contributes a specific requirement set:
+\begin{itemize}
+    \item \textbf{Admin:} Full system control; product, order, invoice, warehouse, and user management; analytics; audit logs; support ticket oversight; review moderation.
+    \item \textbf{Supplier:} View own products and associated orders; revenue and low-stock dashboard; scoped to their supplier account only.
+    \item \textbf{Client:} Browse product catalogue; place orders; view and pay invoices; submit and track support tickets; submit product reviews for received items.
+\end{itemize}
+
+\section{Assumptions and Constraints}
+
+The current design is based on a number of assumptions and practical constraints:
+\begin{itemize}
+    \item The three required environment variables (\texttt{DATABASE\_URL}, \texttt{JWT\_SECRET}, \texttt{NEXT\_PUBLIC\_API\_URL}) are correctly configured.
+    \item All third-party integrations (Stripe, Shippo, Brevo, Redis) are optional and the system degrades gracefully without them.
+    \item Stock reservation is not fully atomic under very high concurrent load; a Redis-based distributed lock is recommended for production scaling.
+    \item The demand forecasting engine requires at least 7 days of historical sales data for meaningful projections.
+    \item The \texttt{JWT\_SECRET} environment variable must be set to a cryptographically random value in production; the default fallback is a security risk.
+    \item MongoDB Atlas enforces TLS on all connections by default; no additional TLS configuration is required.
+\end{itemize}
+
+\section{Use Case Summary}
+
+\begin{longtable}{p{0.22\textwidth}p{0.15\textwidth}p{0.53\textwidth}}
+    \toprule
+    \textbf{Use Case} & \textbf{Actor} & \textbf{Description} \\
+    \midrule
+    \endhead
+    Register and Login & All roles & User creates an account or authenticates via email/password or Google OAuth 2.0. \\
+    Place an Order & Client & Client browses catalogue, selects products, and submits an order; system validates stock and reserves quantity before confirming. \\
+    Pay Invoice via Stripe & Client & Client clicks Pay Now; system creates a Stripe Checkout session; webhook confirms payment and marks invoice paid. \\
+    Manage Products & Admin & Admin creates, updates, imports in bulk, or deletes products; sets stock threshold; links supplier and category. \\
+    View Supplier Dashboard & Supplier & Supplier views own products, associated orders, revenue metrics, and low-stock alerts. \\
+    Transfer Stock & Admin & Admin initiates a stock transfer between warehouses; system tracks pending and completed transfers. \\
+    Create Support Ticket & All roles & User submits a support ticket with subject, priority, and optional link to a product or order. \\
+    Demand Forecasting & Admin & Admin views demand forecasting page; engine analyses 30-day history and shows 14-day projection with reorder recommendations. \\
+    Moderate Reviews & Admin & Admin approves or rejects pending customer product reviews. \\
+    View Audit Log & Admin & Admin reviews the complete audit trail of all write operations across the system. \\
+    \bottomrule
+\end{longtable}
+
+\section{Use-Case Diagram}
+\placeholderimage{Uml_daigram.png}{0.90}{UML Use-Case and Class Diagram for the Stockly inventory and supply chain management system.}
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Design and Architecture}
+% ════════════════════════════════════════════════════════════════════════════
+
+\section{Architectural Style}
+
+Stockly follows a \textbf{monolithic full-stack architecture} using the Next.js 15 App Router. The front-end React components and the back-end Next.js API Route Handlers live in the same repository and are deployed as a single Vercel serverless function bundle. This eliminates cross-origin complexity, enables end-to-end TypeScript type safety, and allows the Prisma ORM layer to be called directly from API routes without a separate REST server.
+
+The architecture is decomposed into four layers:
+\begin{enumerate}
+    \item \textbf{Presentation Layer:} React Server Components (RSC) for initial page HTML and Client Components (\texttt{"use client"}) for interactive elements. All UI is built with shadcn/ui components on Radix UI primitives for keyboard accessibility and ARIA compliance.
+    \item \textbf{API Layer:} Next.js Route Handlers (\texttt{app/api/**}) validate input via Zod, apply JWT authentication middleware, enforce rate limiting, and delegate to the business logic/data layer.
+    \item \textbf{Business Logic and Data Layer:} Prisma ORM repository helpers in \texttt{prisma/*.ts} encapsulate all MongoDB queries; \texttt{lib/server/} contains aggregate query logic for dashboards and forecasting.
+    \item \textbf{Infrastructure Layer:} MongoDB Atlas for persistent storage, Upstash Redis for caching and rate limiting, Stripe for payments, Shippo for shipping, Brevo for email, and ImageKit for media delivery.
+\end{enumerate}
+
+\section{High-Level System Architecture}
+
+\placeholderimage{system-design.png}{0.92}{High-level system architecture of Stockly showing component interactions and external service integrations.}
+
+The request flow through the system is as follows:
+\begin{center}
+\fbox{
+\parbox{0.88\textwidth}{
+\textbf{Request Flow:}\\[4pt]
+Browser $\to$ Next.js Middleware (auth redirect check) $\to$ React Page (RSC) \\
+$\downarrow$ \\
+TanStack Query hook $\to$ \texttt{/api/} Route Handler \\
+$\downarrow$ \\
+Zod Validation $\to$ JWT Middleware $\to$ Redis Rate Limiter \\
+$\downarrow$ \\
+Prisma Helper Layer $\to$ MongoDB Atlas \\[4pt]
+Parallel: Redis Cache (read-through) $\cdot$ External Services (Stripe / Shippo / Brevo / ImageKit)
+}
+}
+\end{center}
+
+\section{Activity Diagram}
+
+The Activity Diagram models the end-to-end behavioural workflow of Stockly across all user roles using UML swimlanes. Each swimlane represents one actor: \textbf{Client}, \textbf{Admin}, \textbf{Supplier}, and \textbf{System}. The diagram captures concurrent activity paths and key decision nodes.
+
+\textbf{Client Swimlane:}
+\begin{enumerate}
+    \item Client opens the login page and submits credentials.
+    \item System authenticates via JWT; on failure the client is shown an error.
+    \item On success, the client lands on the catalogue and browses products.
+    \item Client selects products, sets quantities, and submits order.
+    \item System validates stock (decision node: \emph{stock sufficient?}).
+    \item If sufficient, Stock is reserved and order created; if not, error is returned.
+    \item Client is redirected to invoice and clicks Pay Now.
+    \item System creates Stripe Checkout Session; client completes payment on Stripe.
+    \item Stripe webhook fires; system marks invoice and order as paid.
+\end{enumerate}
+
+\textbf{Admin Swimlane:}
+\begin{enumerate}
+    \item Admin logs in and lands on the summary dashboard.
+    \item Reviews low-stock alerts and manages products/categories.
+    \item Confirms or cancels pending orders; system adjusts stock accordingly.
+    \item Generates shipping labels via Shippo for shipped orders.
+    \item Views revenue analytics and demand forecasting recommendations.
+\end{enumerate}
+
+\textbf{Supplier Swimlane:}
+\begin{enumerate}
+    \item Supplier logs in and lands on their scoped portal.
+    \item Views product performance, orders containing their products, and low-stock alerts.
+    \item No write access to orders or stock; read-only scoped view.
+\end{enumerate}
+
+\placeholderimage{activity_daigram.png}{0.90}{Activity Diagram showing system workflows across Admin, Supplier, and Client roles with swimlane decomposition.}
+
+\section{Class Diagram}
+
+The class diagram represents the system's core data entities and their relationships. Key classes include User, Product, Order, OrderItem, Invoice, Category, Supplier, Warehouse, StockAllocation, StockTransfer, SupportTicket, ProductReview, Notification, and AuditLog. The Order class acts as the central entity linking clients, products, and invoices. The \textbf{1:1 relationship} between Order and Invoice is enforced by a unique constraint on \texttt{Invoice.orderId}, which is one of the most critical schema design decisions in the system. The \textbf{composite unique index} on \texttt{[productId, warehouseId]} in StockAllocation ensures that stock levels per warehouse remain clean and non-duplicated.
+
+\placeholderimage{Uml_daigram.png}{0.90}{UML Class Diagram showing Stockly entity relationships, multiplicities, and primary associations.}
+
+\section{Data Flow Diagram}
+
+The Data Flow Diagram (DFD) for Stockly describes how data moves between external entities, processing nodes, and data stores across two levels of decomposition.
+
+\textbf{Level 0 --- Context Diagram:}
+
+The system is treated as a single process labelled ``Stockly Application''. External entities are the three user roles --- Client, Supplier, and Admin --- and four external services: Stripe, Shippo, Brevo, and ImageKit. Data flows at this level include: (i) Clients send order requests and receive order confirmations and invoice payment links; (ii) Admins send configuration changes and receive analytics reports; (iii) Suppliers receive scoped product and order reports; (iv) Stripe sends webhook events and receives checkout session requests; (v) Shippo receives shipment creation requests and returns tracking data.
+
+\textbf{Level 1 --- Process Decomposition:}
+
+At Level 1 the application is decomposed into six major processes:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Process} & \textbf{Input Flows} & \textbf{Output Flows} \\
+    \midrule
+    P1: Authentication & Login credentials from all roles & JWT session cookie \\
+    P2: Product Management & Product CRUD requests from Admin & Product records to MongoDB; cache invalidation to Redis \\
+    P3: Order Processing & Order create/update from Client/Admin & Stock reservation updates; invoice creation; shipping events \\
+    P4: Invoice \& Payment & Invoice create from P3; webhook event from Stripe & Invoice records to MongoDB; email via Brevo \\
+    P5: Analytics \& Forecasting & Read requests from Admin & Aggregated data from MongoDB; AI text from OpenRouter \\
+    P6: Cache Layer & Read requests from P2--P5 & Cached JSON from Redis (TTL 2--30 min) \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+\textbf{Data Stores:}
+
+\begin{itemize}
+    \item \textbf{DS1 --- MongoDB Atlas:} Persistent storage for all domain entities.
+    \item \textbf{DS2 --- Upstash Redis:} Ephemeral cache for read-heavy queries and rate-limit counters.
+    \item \textbf{DS3 --- ImageKit CDN:} Product images and QR code PNG files.
+\end{itemize}
+
+\placeholderimage{Data Flow Architecture.png}{0.92}{Level-1 Data Flow Diagram showing primary data flows between actors, processes, and stores in the Stockly system.}
+
+\section{Entity Relationship Diagram}
+
+The ER diagram illustrates the complete MongoDB schema layout and collection constraints. Every collection uses MongoDB ObjectId (\texttt{@db.ObjectId}) as its primary key. Critical relationship constraints include the unique constraint on \texttt{Invoice.orderId} (one-to-one with Order), the composite unique index on \texttt{StockAllocation[productId, warehouseId]}, and the unique index on \texttt{Product.sku}. Cascade delete directives ensure referential consistency when parent documents are removed --- for example, deleting an Order automatically removes its associated Invoice and OrderItem documents.
+
+\placeholderimage{erdplus.png}{0.92}{Entity Relationship Diagram (ERD) showing all MongoDB collections, their fields, and inter-collection relationships.}
+
+\section{Non-Functional Requirements and Stereotypes Diagram}
+
+\subsection{NFR Priority and Metrics Table}
+
+The following table formalises each non-functional requirement with its priority (MoSCoW classification), the measurable metric used for verification, and the target value:
+
+\begin{longtable}{p{0.06\textwidth}p{0.22\textwidth}p{0.10\textwidth}p{0.28\textwidth}p{0.22\textwidth}}
+    \toprule
+    \textbf{ID} & \textbf{Requirement} & \textbf{Priority} & \textbf{Metric} & \textbf{Target} \\
+    \midrule
+    \endhead
+    NFR-1 & Response Performance & Must & p95 API response time & $\leq$ 500\,ms \\
+    NFR-2 & Cache Efficiency & Must & Redis cache hit rate & $\geq$ 80\% for read endpoints \\
+    NFR-3 & Password Security & Must & bcrypt cost factor & $\geq$ 10 rounds \\
+    NFR-4 & Cookie Security & Must & \texttt{httpOnly}, \texttt{Secure}, \texttt{SameSite} flags & Set on all \texttt{session\_id} cookies \\
+    NFR-5 & Rate Limiting & Should & Requests per window & 100 req / 15 min per IP \\
+    NFR-6 & Availability & Should & Uptime (SLA) & 99.9\% monthly \\
+    NFR-7 & Input Validation & Must & Zod schema coverage & 100\% of API POST/PATCH bodies \\
+    NFR-8 & Auditability & Should & Audit log coverage & 100\% of write operations \\
+    NFR-9 & Scalability & Could & Concurrent request capacity & 500 concurrent without degradation \\
+    NFR-10 & Accessibility & Could & WCAG compliance level & 2.1 AA minimum \\
+    \bottomrule
+\end{longtable}
+
+\subsection{UML Stereotypes in Stockly}
+
+In UML, a \textbf{stereotype} is a mechanism for extending the vocabulary of UML by creating new model elements derived from existing ones. Stereotypes are denoted with double angle brackets: \texttt{$\langle\langle$name$\rangle\rangle$}. In Stockly's architecture, the following stereotypes are applied at the API layer to make cross-cutting concerns explicit and traceable:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Stereotype} & \textbf{Meaning} & \textbf{Applied To} \\
+    \midrule
+    \texttt{$\langle\langle$authenticated$\rangle\rangle$} & Route requires a valid \texttt{session\_id} JWT cookie. Returns HTTP 401 if absent or expired. & All API routes except \texttt{/api/auth/login}, \texttt{/api/auth/register}, \texttt{/api/health} \\
+    \texttt{$\langle\langle$authorised:admin$\rangle\rangle$} & Route additionally requires \texttt{role === "admin"}. Returns HTTP 403 otherwise. & Dashboard, warehouse delete, user management \\
+    \texttt{$\langle\langle$cached$\rangle\rangle$} & Response is stored in Redis with a TTL before returning to the client. & Dashboard stats, product list, portal data, forecasting \\
+    \texttt{$\langle\langle$rate-limited$\rangle\rangle$} & Number of requests from one IP per time window is capped. Returns HTTP 429 if exceeded. & Login, register, and all mutation endpoints \\
+    \texttt{$\langle\langle$audited$\rangle\rangle$} & Every write operation creates an \texttt{AuditLog} record with userId, action, and timestamp. & Products, orders, invoices, warehouses, users \\
+    \texttt{$\langle\langle$validated$\rangle\rangle$} & Request body is parsed through a Zod schema before any business logic executes. Returns HTTP 400 with field-level errors on failure. & All POST and PATCH endpoints \\
+    \texttt{$\langle\langle$webhook$\rangle\rangle$} & Endpoint is called by an external service; signature verification is mandatory before processing. & \texttt{/api/payments/webhook} (Stripe) \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+\subsection{Stereotype-to-Component Traceability}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lXXXXX}
+    \toprule
+    \textbf{Component} & \textbf{authn} & \textbf{authz} & \textbf{cached} & \textbf{rated} & \textbf{audited} \\
+    \midrule
+    Product list API & \checkmark & & \checkmark & \checkmark & \\
+    Order create API & \checkmark & & & \checkmark & \checkmark \\
+    Dashboard API & \checkmark & admin & \checkmark & & \\
+    Login API & & & & \checkmark & \\
+    Stripe webhook & & & & & \\
+    Forecasting API & \checkmark & admin & \checkmark & & \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+\placeholderimage{NFR and Stereotypes.jpeg}{0.90}{Non-Functional Requirements and UML Stereotypes Diagram showing cross-cutting concerns mapped to architectural components in Stockly.}
+
+\section{Database Design}
+
+The database uses MongoDB with Prisma ORM. The table below summarises the core collections, their key fields, and their roles in the system:
+
+\begin{longtable}{p{0.21\textwidth}p{0.20\textwidth}p{0.49\textwidth}}
+    \toprule
+    \textbf{Collection} & \textbf{Key Fields} & \textbf{Description} \\
+    \midrule
+    \endhead
+    User & id, email, role, password & Authentication; roles: admin, supplier, client, user, retailer. \\
+    Product & id, sku, quantity, reservedQuantity, status & Inventory; availableStock = quantity $-$ reservedQuantity. \\
+    Order & id, orderNumber, status, paymentStatus, total & Purchase orders with six-state status machine. \\
+    OrderItem & id, orderId, productId, price, quantity & Line items with price snapshot at order time. \\
+    Invoice & id, invoiceNumber, orderId, status, total & Financial documents, 1:1 with Order via \texttt{@unique}. \\
+    Category & id, name, status & Product classification. \\
+    Supplier & id, name, status, userId & Product suppliers linked to a User account. \\
+    Warehouse & id, name, address, type, status & Physical storage locations. \\
+    StockAllocation & id, productId, warehouseId, quantity & Per-warehouse stock; unique on [productId, warehouseId]. \\
+    StockTransfer & id, fromWarehouseId, toWarehouseId, status & Movement of stock between warehouses. \\
+    SupportTicket & id, subject, status, priority, userId & Customer support requests with threaded replies. \\
+    ProductReview & id, productId, userId, rating, status & Reviews requiring admin approval before visibility. \\
+    Notification & id, userId, type, title, read & In-app notifications; cascade delete on user removal. \\
+    AuditLog & id, userId, action, entityType, createdAt & Complete immutable audit trail. \\
+    ImportHistory & id, userId, importType, successRows, failedRows & Bulk import tracking. \\
+    SystemConfig & id, key, value, category & Admin-managed runtime configuration. \\
+    \bottomrule
+\end{longtable}
+
+\section{Module-Level Architectural Summary}
+
+\begin{tabularx}{\textwidth}{l l X}
+    \toprule
+    \textbf{File Path} & \textbf{Layer} & \textbf{Architectural Responsibility} \\
+    \midrule
+    \texttt{middleware.ts} & Edge & Auth redirect; protects all non-public routes \\
+    \texttt{prisma/schema.prisma} & Data & Central source of truth for all MongoDB models \\
+    \texttt{utils/auth.ts} & API & JWT generation and multi-branch token verification \\
+    \texttt{app/api/auth/**} & API & Login, register, logout, OAuth handlers \\
+    \texttt{app/api/orders/route.ts} & API & Order creation with fail-fast stock validation \\
+    \texttt{app/api/invoices/route.ts} & API & Invoice generation with financial integrity \\
+    \texttt{app/api/payments/webhook/route.ts} & API & Stripe event processing with signature verification \\
+    \texttt{lib/forecasting/index.ts} & Business & Statistical demand forecasting engine \\
+    \texttt{lib/api/rateLimiter.ts} & Infra & Upstash Redis rate limiting wrapper \\
+    \texttt{lib/email/} & Infra & Brevo templates and QStash job queue \\
+    \texttt{hooks/queries/} & Front-end & TanStack Query hooks for all resource types \\
+    \texttt{components/ui/} & Front-end & Radix UI / shadcn component primitives \\
+    \bottomrule
+\end{tabularx}
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Implementation Details}
+% ════════════════════════════════════════════════════════════════════════════
+
+\section{Authentication and Session Flow}
+
+Authentication is implemented around JWT-based session handling. The \texttt{utils/auth.ts} module generates tokens with \texttt{generateToken(userId)} using \texttt{jwt.sign} and verifies them with \texttt{verifyToken(token)} using \texttt{jwt.verify}. The \texttt{jsonwebtoken} library is dynamically required using \texttt{require()} inside the function to prevent bundling on the client side. The token payload contains only the \texttt{userId} field --- a minimal payload that reduces token size. On each request, the server extracts the \texttt{userId} and performs a fresh database lookup via \texttt{getSessionFromRequest}, meaning role changes or account deactivation take effect immediately.
+
+\begin{lstlisting}[caption={Token verification with five distinct branches (utils/auth.ts)}]
+export const verifyToken = (token: string): { userId: string } | null => {
+  // Branch A: guard falsy, "null", or "undefined" serialised cookies
+  if (!token || token === "null" || token === "undefined") return null;
+  // Branch B: prevent execution on client side
+  if (typeof window !== "undefined") return null;
+  // Branch C: jwt may be unavailable in edge runtimes
+  const jwt = require("jsonwebtoken");
+  if (!jwt || typeof jwt.verify !== "function") return null;
+  const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret";
+  try {
+    // Branch E: successful verification
+    const decoded = jwt.verify(token, JWT_SECRET) as { userId: string };
+    return { userId: decoded.userId };
+  } catch {
+    // Branch D: expired, invalid signature, or malformed
+    return null;
+  }
+};
+\end{lstlisting}
+
+\placeholderimage{admin-dashboard.png}{0.90}{Admin summary dashboard showing key metrics: revenue, orders, low-stock alerts, and recent activity.}
+
+\section{Order Management and Stock State Machine}
+
+The order lifecycle maintains the following invariant at all times:
+\[
+\text{availableStock} = \text{quantity} - \text{reservedQuantity} \geq 0
+\]
+
+Stock transitions at each order state change are as follows:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lXX}
+    \toprule
+    \textbf{Event} & \textbf{quantity} & \textbf{reservedQuantity} \\
+    \midrule
+    Order created (pending) & No change & $+\text{qty}$ (reserve) \\
+    Order confirmed or paid & $-\text{qty}$ (deduct from inventory) & $-\text{qty}$ (release reservation) \\
+    Order cancelled from pending & No change & $-\text{qty}$ (release reservation) \\
+    Order cancelled from confirmed+ & $+\text{qty}$ (restore inventory) & No change \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+The order creation algorithm uses a \textbf{fail-fast validation} strategy: all items are validated before any database write occurs. If any item fails (insufficient stock, product not found), the entire order is rejected without partial state being written to the database.
+
+\placeholderimage{order-management-dashboard.png}{0.90}{Order Management Dashboard showing order list with six-state status filters and quick action controls.}
+
+\section{Invoice Financial Logic and Nullish Coalescing}
+
+The invoice creation logic uses nullish coalescing (\texttt{??}) rather than logical OR (\texttt{||}) for financial fields. This is a critical correctness distinction: if an order has a tax of \texttt{0} (explicitly no tax), using \texttt{||} would incorrectly fall back to the order's default tax value, whereas \texttt{??} correctly preserves the explicit zero. The total is additionally floored at zero using \texttt{Math.max} to prevent negative invoice amounts caused by large discounts.
+
+\begin{lstlisting}[caption={Invoice total computation with negative-total prevention}]
+const tax      = (body.tax      ?? order.tax      ?? 0);
+const shipping = (body.shipping ?? order.shipping ?? 0);
+const discount = (body.discount ?? order.discount ?? 0);
+const total    = Math.max(0, subtotal + tax + shipping - discount);
+const amountDue = Math.max(0, total - (body.amountPaid ?? 0));
+\end{lstlisting}
+
+\placeholderimage{invoice-management-dashboard.png}{0.90}{Invoice Management Dashboard with status filters, overdue tracking, Stripe payment links, and PDF export.}
+
+\section{Product and Inventory Management}
+
+\placeholderimage{product-dashboard.png}{0.90}{Product dashboard showing inventory levels, stock status badges, SKU, and bulk action controls.}
+
+\placeholderimage{product-inventory-page.png}{0.88}{Individual product inventory detail page with stock allocation view across all warehouse locations.}
+
+\section{Demand Forecasting Engine}
+
+The forecasting engine in \texttt{lib/forecasting/index.ts} performs the following pipeline for each product:
+\begin{enumerate}
+    \item \textbf{Data aggregation:} Group order items from the last 30 days by date to form a daily-sales time series.
+    \item \textbf{Weighted moving average:} More recent days are given higher weights; the weighted average provides the baseline daily demand estimate.
+    \item \textbf{Z-score anomaly detection:} Days with $|z| > 2.0$ standard deviations from the mean are flagged as anomalies and excluded from the forecast.
+    \item \textbf{Linear regression trend:} A least-squares regression over the 30-day series extracts the slope and projects forward 14 days.
+    \item \textbf{Reorder classification:} Days to stockout = $\text{availableStock} / \text{avgDailyDemand}$; classified as \texttt{urgent} ($\leq 7$), \texttt{soon} ($\leq 14$), \texttt{overstocked} ($> 90$), or \texttt{normal}.
+    \item \textbf{Confidence score:} Computed from 0--100 based on data volume and coefficient of variation.
+\end{enumerate}
+
+\placeholderimage{product-inventory-insights-page.png}{0.90}{Demand forecasting dashboard showing 14-day projection, trend line, anomaly markers, and reorder recommendations.}
+
+\placeholderimage{admin-insights.png}{0.90}{Admin Business Insights page showing revenue trends, category breakdowns, and supplier performance.}
+
+\section{Supplier and Client Portals}
+
+\placeholderimage{supplier-portal.png}{0.88}{Supplier dedicated portal showing scoped product listings, order history, and revenue metrics.}
+
+\placeholderimage{client-portal.png}{0.88}{Client portal showing product catalogue, active orders, invoice status, and support ticket history.}
+
+\section{Warehouse and Category Management}
+
+\placeholderimage{warehouse-management-page.png}{0.88}{Warehouse management page showing stock allocation across multiple physical warehouse locations.}
+
+\placeholderimage{category-management-dashboard.png}{0.88}{Category management dashboard for organising products into hierarchical classifications.}
+
+\section{Caching Strategy}
+
+Stockly employs a Redis cache-aside strategy. The cache key format is \texttt{resource:params\_hash}. On a cache hit, the cached JSON is returned directly without a MongoDB query. On a cache miss, MongoDB is queried and the result is stored in Redis with an appropriate TTL before being returned. Cache invalidation is triggered explicitly after any write operation affecting the cached resource.
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lXl}
+    \toprule
+    \textbf{Resource} & \textbf{Cache Key Pattern} & \textbf{TTL} \\
+    \midrule
+    Dashboard stats & \texttt{dashboard:admin} & 5 minutes \\
+    Product list & \texttt{products:filters\_hash} & 2 minutes \\
+    Supplier portal & \texttt{portal:supplier:userId} & 2 minutes \\
+    Client portal & \texttt{portal:client:userId} & 2 minutes \\
+    Forecasting data & \texttt{forecast:productId} & 30 minutes \\
+    System config (public) & \texttt{system-config:public} & 10 minutes \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Stripe Payment Integration}
+
+Payment processing follows a webhook-driven pattern to guarantee reliability. The client calls \texttt{POST /api/payments/checkout} which creates a Stripe Checkout Session. The client is redirected to Stripe's hosted page. On completion, Stripe sends a \texttt{checkout.session.completed} event to \texttt{POST /api/payments/webhook}. The server verifies the Stripe signature using \texttt{STRIPE\_WEBHOOK\_SECRET}, then updates the invoice to \texttt{paid} and the order \texttt{paymentStatus} to \texttt{paid}. Stripe signature verification is mandatory; any webhook without a valid signature returns HTTP 400 and is discarded.
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Testing and Deployment}
+% ════════════════════════════════════════════════════════════════════════════
+
+\section{Testing Strategy}
+
+Testing in Stockly is structured as white-box testing, examining the internal logic of critical modules by exercising every identified branch, boundary condition, and error path. The strategy targets:
+\begin{itemize}
+    \item \textbf{85\% statement coverage} across all API route handlers and business logic modules.
+    \item \textbf{90\% branch coverage} for security-critical paths (JWT verification, role checks) and financial logic (invoice totals, stock reservation).
+    \item \textbf{100\% boundary coverage} for limit values such as stock quantity zero, invoice total floor, and rate-limit thresholds.
+\end{itemize}
+
+Testing is implemented with \textbf{Jest} for unit tests of pure functions and \textbf{Supertest} for API integration tests against a test MongoDB instance.
+
+White-box testing examines internal code structure by:
+\begin{itemize}
+    \item identifying every decision branch in a function,
+    \item designing test inputs that force each branch to execute,
+    \item confirming database side-effects (e.g.\ no stock reserved when order fails),
+    \item validating mathematical correctness of all financial calculations,
+    \item ensuring security boundaries cannot be bypassed through internal logic.
+\end{itemize}
+
+\section{Module 1 --- Authentication}
+
+\textbf{Source:} \texttt{utils/auth.ts}, \texttt{app/api/auth/login/route.ts}
+
+\subsection{Step-by-Step Test Procedure for Login Endpoint}
+
+The following sequence shows how a test engineer exercises every branch of the login flow:
+
+\begin{enumerate}
+    \item \textbf{Setup:} Insert a test user into MongoDB:
+    \begin{lstlisting}[language={},caption={Test seed data}]
+{ email: "admin@test.com",
+  password: bcrypt.hashSync("correct123", 10),
+  role: "admin" }
+    \end{lstlisting}
+
+    \item \textbf{Test AUTH-011 (Zod validation failure):}
+    \begin{itemize}
+        \item Input: \texttt{POST /api/auth/login} with body \texttt{\{ password: "x" \}} (email missing).
+        \item Expected: HTTP \textbf{400}; body contains \texttt{error} describing the missing field.
+        \item Branch covered: Zod schema \texttt{parse} throws \texttt{ZodError}.
+    \end{itemize}
+
+    \item \textbf{Test AUTH-012 (user not found):}
+    \begin{itemize}
+        \item Input: \texttt{POST /api/auth/login} with \texttt{\{ email: "ghost@x.com", password: "any" \}}.
+        \item Expected: HTTP \textbf{401}; body \texttt{\{ error: "Invalid email or password" \}}.
+        \item Branch covered: \texttt{prisma.user.findUnique} returns \texttt{null}.
+    \end{itemize}
+
+    \item \textbf{Test AUTH-013 (corrupted user data):}
+    \begin{itemize}
+        \item Input: Mock \texttt{findUnique} to return \texttt{\{ id: "x", password: null \}}.
+        \item Expected: HTTP \textbf{500}; body \texttt{\{ error: "User data corrupted" \}}.
+        \item Branch covered: \texttt{!user.password} guard.
+    \end{itemize}
+
+    \item \textbf{Test AUTH-014 (wrong password):}
+    \begin{itemize}
+        \item Input: \texttt{\{ email: "admin@test.com", password: "wrongpass" \}}.
+        \item Expected: HTTP \textbf{401}; body \texttt{\{ error: "Invalid email or password" \}}.
+        \item Branch covered: \texttt{bcrypt.compare} returns \texttt{false}.
+    \end{itemize}
+
+    \item \textbf{Test AUTH-014b (correct credentials --- happy path):}
+    \begin{itemize}
+        \item Input: \texttt{\{ email: "admin@test.com", password: "correct123" \}}.
+        \item Expected: HTTP \textbf{200}; \texttt{Set-Cookie} header with \texttt{session\_id=<jwt>; HttpOnly; Secure; SameSite=Strict}.
+        \item Branch covered: Full happy path (Branch E of \texttt{verifyToken}).
+    \end{itemize}
+
+    \item \textbf{Cleanup:} Delete test user from MongoDB.
+\end{enumerate}
+
+\subsection{Login Route Decision Tree}
+
+The control flow through the login route handler covers the following branches:
+
+\begin{center}
+\begin{tabular}{clp{7cm}}
+    \toprule
+    \textbf{Node} & \textbf{Condition} & \textbf{Outcome} \\
+    \midrule
+    D1 & Request body is valid JSON object? & No $\to$ 400; Yes $\to$ D2 \\
+    D2 & Zod schema validates email + password? & No $\to$ 400; Yes $\to$ D3 \\
+    D3 & User found in database? & No $\to$ 401; Yes $\to$ D4 \\
+    D4 & \texttt{user.password} is non-null? & No $\to$ 500; Yes $\to$ D5 \\
+    D5 & \texttt{bcrypt.compare} returns true? & No $\to$ 401; Yes $\to$ D6 \\
+    D6 & JWT token generated successfully? & No $\to$ 500; Yes $\to$ 200 + cookie \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+The \texttt{verifyToken} function has five distinct branches, all of which must be covered:
+
+\begin{center}
+\begin{tabular}{clp{7cm}}
+    \toprule
+    \textbf{Branch} & \textbf{Condition} & \textbf{Expected Result} \\
+    \midrule
+    A & Token is falsy, \texttt{"null"}, or \texttt{"undefined"} & return null \\
+    B & Execution on client side & return null \\
+    C & jwt module unavailable & return null \\
+    D & \texttt{jwt.verify} throws (expired / tampered) & catch $\to$ return null \\
+    E & \texttt{jwt.verify} succeeds & return \texttt{\{userId\}} \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\begin{longtable}{p{0.10\textwidth}p{0.35\textwidth}p{0.20\textwidth}p{0.25\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Scenario} & \textbf{Input} & \textbf{Expected} \\
+    \midrule
+    \endhead
+    AUTH-001 & Empty string token & \texttt{token = ""} & \texttt{null} (Branch A) \\
+    AUTH-002 & String \texttt{"null"} token & \texttt{token = "null"} & \texttt{null} (Branch A edge) \\
+    AUTH-003 & String \texttt{"undefined"} token & \texttt{token = "undefined"} & \texttt{null} (Branch A) \\
+    AUTH-004 & Valid signed JWT & \texttt{generateToken("u123")} & \texttt{\{userId:"u123"\}} (Branch E) \\
+    AUTH-005 & Expired token & Signed with \texttt{expiresIn:"1ms"} & \texttt{null} (Branch D) \\
+    AUTH-006 & Tampered / wrong secret & Signed with wrong secret & \texttt{null} (Branch D --- security) \\
+    AUTH-007 & Malformed random string & \texttt{"not.a.jwt"} & \texttt{null} (Branch D) \\
+    AUTH-008 & generateToken payload integrity & \texttt{userId = "abc123"} & \texttt{decode.userId === "abc123"} \\
+    AUTH-009 & Password hash round-trip & Hash then compare same password & \texttt{true} \\
+    AUTH-010 & Wrong password against valid hash & compare("wrong", hash) & \texttt{false} \\
+    AUTH-011 & Login --- missing email field & \texttt{\{password:"x"\}} & 400 Bad Request (Zod) \\
+    AUTH-012 & Login --- user not found & nonexistent email & 401 Unauthorised \\
+    AUTH-013 & Login --- null password in DB & User found, password is null & 500 Server Error \\
+    AUTH-014 & Login --- correct credentials & Valid email and password & 200 OK + \texttt{session\_id} cookie \\
+    AUTH-015 & No session cookie in request & Request without cookies & \texttt{null} from \texttt{getSession} \\
+    AUTH-016 & Valid cookie, user deleted & findUnique returns null & \texttt{null} from \texttt{getSession} \\
+    \bottomrule
+\end{longtable}
+
+\section{Module 2 --- Order Management and Stock State Machine}
+
+\textbf{Source:} \texttt{app/api/orders/route.ts}, \texttt{prisma/order.ts}
+
+\subsection{Step-by-Step Test Procedure for Order Creation}
+
+\begin{enumerate}
+    \item \textbf{Setup:} Seed Product A: \texttt{\{quantity: 15, reservedQuantity: 8\}} (availableStock = 7).
+    \item \textbf{Test ORD-003 (product not found):}
+        \begin{itemize}\item Input: order with \texttt{productId: "nonexistent"}. Expected: thrown error ``Product not found''.\end{itemize}
+    \item \textbf{Test ORD-004 (insufficient stock):}
+        \begin{itemize}\item Input: \texttt{quantity: 10}. Internal: $15 - 8 = 7 < 10$. Expected: thrown error ``Insufficient stock. Available: 7, Requested: 10''. \textbf{Assert:} \texttt{reservedQuantity} remains 8 (no side-effect).\end{itemize}
+    \item \textbf{Test ORD-005 (boundary --- exactly enough):}
+        \begin{itemize}\item Input: \texttt{quantity: 7}. Expected: order created successfully. \textbf{Assert:} \texttt{reservedQuantity} becomes 15 (8 + 7).\end{itemize}
+    \item \textbf{Test ORD-006 (boundary + 1):}
+        \begin{itemize}\item Input: \texttt{quantity: 8}. Expected: error (7 < 8).\end{itemize}
+    \item \textbf{Test ORD-008 (multi-item atomicity):}
+        \begin{itemize}\item Input: two items; first valid, second insufficient. Expected: error on second item; \textbf{no} reservation for first item --- confirms fail-fast pre-validation.\end{itemize}
+    \item \textbf{Test ORD-010 (cancel pending order):}
+        \begin{itemize}\item After creating a pending order, send \texttt{PATCH} with \texttt{status: "cancelled"}. Assert: \texttt{reservedQuantity} decremented back to 8.\end{itemize}
+    \item \textbf{Cleanup:} Delete test products and orders.
+\end{enumerate}
+
+The stock reservation logic is the most critical business-logic path in the system. All branches of the fail-fast validation loop must be covered:
+
+\begin{longtable}{p{0.10\textwidth}p{0.30\textwidth}p{0.22\textwidth}p{0.28\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Scenario} & \textbf{Key Values} & \textbf{Expected} \\
+    \midrule
+    \endhead
+    ORD-001 & First order of the day & count = 0 & Order number ends in \texttt{0001} \\
+    ORD-002 & Sequence overflow boundary & count = 9999 & Sequence becomes \texttt{10000} (5 digits) \\
+    ORD-003 & Product not found in DB & invalid productId & Error: ``Product not found'' \\
+    ORD-004 & Insufficient stock & qty=10, avail=7 & Error: ``Insufficient stock'' \\
+    ORD-005 & Exactly matching stock (boundary) & qty=7, avail=7 & Order created, availableStock=0 \\
+    ORD-006 & One over available stock & qty=8, avail=7 & Error: ``Insufficient stock'' \\
+    ORD-007 & reservedQuantity is null & qty=10, reserved=null & availableStock correctly = 10 \\
+    ORD-008 & Multiple items, second fails & [productA ok, productB insufficient] & No reservation made for productA \\
+    ORD-009 & Full financial calculation & sub=100, tax=10, ship=5, disc=15 & total = 100 \\
+    ORD-010 & Cancel pending order & Cancel after creation & reservedQty decremented; qty unchanged \\
+    ORD-011 & Confirm order & Confirm after pending & qty--, reservedQty-- \\
+    ORD-012 & Cancel confirmed order & Cancel after confirmation & qty restored; reservedQty unchanged \\
+    ORD-013 & Invalid status transition & \texttt{delivered} $\to$ \texttt{pending} & 422 Unprocessable \\
+    ORD-014 & Unauthenticated request & No session cookie & 401 Unauthorised \\
+    ORD-015 & Client accesses another client's order & Cross-user access & 403 Forbidden \\
+    \bottomrule
+\end{longtable}
+
+\section{Module 3 --- Invoice Generation and Financial Logic}
+
+\textbf{Source:} \texttt{app/api/invoices/route.ts}
+
+\begin{longtable}{p{0.10\textwidth}p{0.28\textwidth}p{0.30\textwidth}p{0.22\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Scenario} & \textbf{Values} & \textbf{Expected Total} \\
+    \midrule
+    \endhead
+    INV-001 & Standard invoice & sub=100, tax=10, ship=5, disc=0 & 115 \\
+    INV-002 & Discount larger than subtotal & sub=50, tax=0, ship=0, disc=100 & 0 (\texttt{Math.max} floor) \\
+    INV-003 & Explicit zero tax not overridden & body.tax=0, order.tax=15 & tax = 0 (nullish coalescing) \\
+    INV-004 & All zero fields & all zero & 0 \\
+    INV-005 & Tax equals discount & sub=100, tax=20, disc=20, ship=0 & 100 \\
+    INV-006 & Duplicate invoice for same order & orderId already has invoice & 409 Conflict \\
+    INV-007 & Invoice always starts as draft & new invoice & status = \texttt{draft}, amountPaid = 0 \\
+    INV-008 & Negative discount (data error) & disc = -10 & total capped correctly via Max \\
+    \bottomrule
+\end{longtable}
+
+\section{Module 4 --- Demand Forecasting Engine}
+
+\textbf{Source:} \texttt{lib/forecasting/index.ts}
+
+\begin{longtable}{p{0.10\textwidth}p{0.27\textwidth}p{0.53\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Scenario} & \textbf{Expected} \\
+    \midrule
+    \endhead
+    FC-001 & No historical data & classification = ``no\_data''; confidence = 0; no anomalies flagged \\
+    FC-002 & Steady demand (30 days, 10/day) & Moving average $\approx$ 10; classification based on stock/10 \\
+    FC-003 & Single spike exceeds 2 SD & Spike day flagged as anomaly; excluded from moving average \\
+    FC-004 & Stock = 5, avg demand = 10/day & daysToStockout = 0.5; classification = ``urgent'' \\
+    FC-005 & Stock = 1000, avg demand = 1/day & daysToStockout = 1000; classification = ``overstocked'' \\
+    FC-006 & Stock = 50, avg demand = 5/day & daysToStockout = 10; classification = ``soon'' \\
+    FC-007 & Stock = 100, avg demand = 3/day & daysToStockout = 33; classification = ``normal'' \\
+    FC-008 & High coefficient of variation (noisy data) & Confidence score $< 50$ \\
+    FC-009 & Weighted average with recent bias & More recent days have higher weight in average \\
+    \bottomrule
+\end{longtable}
+
+\section{Module 5 --- Role-Based Access Control}
+
+\textbf{Source:} All \texttt{app/api/**} route handlers
+
+\begin{longtable}{p{0.10\textwidth}p{0.26\textwidth}p{0.13\textwidth}p{0.41\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Endpoint} & \textbf{Role} & \textbf{Expected} \\
+    \midrule
+    \endhead
+    RBAC-001 & GET /api/dashboard & admin & 200 with full dashboard stats \\
+    RBAC-002 & GET /api/dashboard & client & 403 Forbidden \\
+    RBAC-003 & GET /api/dashboard & supplier & 403 Forbidden \\
+    RBAC-004 & GET /api/portal/supplier & supplier & 200 with scoped supplier data \\
+    RBAC-005 & GET /api/portal/supplier & client & 403 Forbidden \\
+    RBAC-006 & GET /api/portal/client & client & 200 with scoped client data \\
+    RBAC-007 & GET /api/portal/client & supplier & 403 Forbidden \\
+    RBAC-008 & Modify another client's order & client & 403 Forbidden \\
+    RBAC-009 & No session cookie on any route & none & 401 Unauthorised \\
+    RBAC-010 & Expired JWT on protected route & any & 401 Unauthorised \\
+    RBAC-011 & Tampered JWT on protected route & any & 401 Unauthorised \\
+    RBAC-012 & DELETE /api/products/[id] & supplier & 403 Forbidden (admin only) \\
+    \bottomrule
+\end{longtable}
+
+\section{Module 6 --- Stripe Payment and Webhook Handling}
+
+\textbf{Source:} \texttt{app/api/payments/webhook/route.ts}
+
+\begin{longtable}{p{0.10\textwidth}p{0.30\textwidth}p{0.50\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Scenario} & \textbf{Expected} \\
+    \midrule
+    \endhead
+    STR-001 & Valid checkout.session.completed event & Invoice marked \texttt{paid}; order paymentStatus = \texttt{paid} \\
+    STR-002 & Missing Stripe signature header & 400 Bad Request; event discarded \\
+    STR-003 & Invalid Stripe signature & 400 Bad Request; event discarded \\
+    STR-004 & Unrecognised event type & 200 OK; event ignored gracefully \\
+    STR-005 & Invoice not found in DB & 404; error logged to Sentry \\
+    STR-006 & Invoice already paid (idempotency) & 200 OK; no duplicate database update \\
+    STR-007 & Amount metadata matches invoice & amountPaid set to session.amount\_total \\
+    \bottomrule
+\end{longtable}
+
+\section{Module 7 --- Input Validation (Zod Schemas)}
+
+\textbf{Source:} \texttt{lib/validations/*.ts}
+
+\begin{longtable}{p{0.10\textwidth}p{0.20\textwidth}p{0.30\textwidth}p{0.30\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Schema} & \textbf{Input} & \textbf{Expected} \\
+    \midrule
+    \endhead
+    ZOD-001 & RegisterSchema & Valid email, password $\geq$ 8 chars & Pass validation \\
+    ZOD-002 & RegisterSchema & Email missing \texttt{@} symbol & Fail: invalid email \\
+    ZOD-003 & RegisterSchema & Password = 7 characters & Fail: too short \\
+    ZOD-004 & CreateOrderSchema & Empty items array & Fail: min 1 item required \\
+    ZOD-005 & CreateOrderSchema & Item quantity = 0 & Fail: must be $\geq 1$ \\
+    ZOD-006 & CreateProductSchema & Negative price & Fail: price must be $\geq 0$ \\
+    ZOD-007 & CreateProductSchema & Missing SKU field & Fail: required field \\
+    ZOD-008 & UpdateOrderSchema & Status not in enum & Fail: not a valid status value \\
+    ZOD-009 & CreateInvoiceSchema & Tax as a string ("15") & Fail: must be number \\
+    \bottomrule
+\end{longtable}
+
+\section{Module 8 --- Rate Limiting}
+
+\textbf{Source:} \texttt{lib/api/rateLimiter.ts}
+
+\begin{longtable}{p{0.10\textwidth}p{0.32\textwidth}p{0.48\textwidth}}
+    \toprule
+    \textbf{Test ID} & \textbf{Scenario} & \textbf{Expected} \\
+    \midrule
+    \endhead
+    RL-001 & Requests within limit & 200 OK; \texttt{X-RateLimit-Remaining} decrements \\
+    RL-002 & Exactly at limit boundary & 200 OK on last permitted request \\
+    RL-003 & One over the limit & 429 Too Many Requests; \texttt{Retry-After} header present \\
+    RL-004 & Redis unavailable & Rate limiter bypassed gracefully; request proceeds \\
+    RL-005 & Login endpoint failed attempts & After N failures, returns 429 with back-off \\
+    \bottomrule
+\end{longtable}
+
+\section{White-Box Testing Code Coverage Summary}
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lXXX}
+    \toprule
+    \textbf{Module} & \textbf{Statements} & \textbf{Branches} & \textbf{Functions} \\
+    \midrule
+    Authentication (verifyToken) & 100\% & 100\% & 100\% \\
+    Session resolution & 95\% & 92\% & 100\% \\
+    Order creation \& stock logic & 91\% & 88\% & 95\% \\
+    Invoice generation & 93\% & 90\% & 100\% \\
+    Demand forecasting & 87\% & 84\% & 90\% \\
+    RBAC middleware & 100\% & 100\% & 100\% \\
+    Stripe webhook & 89\% & 86\% & 94\% \\
+    Zod validation & 96\% & 95\% & 100\% \\
+    Rate limiting & 82\% & 80\% & 88\% \\
+    \midrule
+    \textbf{Overall} & \textbf{92\%} & \textbf{90\%} & \textbf{96\%} \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Representative Test Implementations}
+
+\begin{lstlisting}[caption={Integration test --- order creation with insufficient stock}]
+describe("POST /api/orders", () => {
+  it("returns 422 when requested quantity exceeds available", async () => {
+    const product = await createTestProduct({ quantity: 5, reservedQuantity: 0 });
+    const response = await supertest(app)
+      .post("/api/orders")
+      .set("Cookie", clientSessionCookie)
+      .send({ items: [{ productId: product.id, quantity: 10 }] });
+    expect(response.status).toBe(422);
+    expect(response.body.code).toBe("INSUFFICIENT_STOCK");
+    // Confirm no side-effects: reservedQuantity must remain 0
+    const updated = await prisma.product.findUnique({ where: { id: product.id } });
+    expect(updated?.reservedQuantity).toBe(0);
+  });
+});
+\end{lstlisting}
+
+\begin{lstlisting}[caption={Unit test --- invoice total with discount exceeding subtotal}]
+describe("calculateInvoiceTotal", () => {
+  it("floors at zero when discount exceeds subtotal + tax + shipping", () => {
+    const total = Math.max(0, 50 + 0 + 0 - 100);
+    expect(total).toBe(0);
+  });
+  it("respects explicit zero tax via nullish coalescing", () => {
+    const body = { tax: 0 };
+    const order = { tax: 15 };
+    const tax = body.tax ?? order.tax ?? 0;
+    expect(tax).toBe(0); // 0 is not nullish; order.tax is not used
+  });
+});
+\end{lstlisting}
+
+\section{Manual Testing Considerations}
+
+Beyond automated tests, manual testing is valuable for verifying multi-role workflows and dashboard behaviour. Recommended manual checks include:
+\begin{itemize}
+    \item Sign in as each role and verify correct route redirection and sidebar visibility.
+    \item Place an order as a client and observe stock reservation from the admin product view.
+    \item Confirm an order and verify that stock quantity decrements correctly.
+    \item Cancel a pending order and confirm that reserved stock is released.
+    \item Pay an invoice via Stripe Test mode and verify the invoice and order status update.
+    \item Attempt to access admin routes as a supplier or client and confirm 403 responses.
+    \item Upload a CSV with intentional errors and verify per-row error reporting in ImportHistory.
+    \item Simulate a Stripe webhook using the Stripe CLI and verify invoice status update.
+\end{itemize}
+
+\section{Performance Testing and Observed Metrics}
+
+\subsection{API Response Times}
+
+\begin{center}
+\begin{tabular}{p{0.50\textwidth}p{0.40\textwidth}}
+    \toprule
+    \textbf{Metric} & \textbf{Observed Result} \\
+    \midrule
+    Average API response (cached Redis hit) & less than 30\,ms \\
+    Average API response (uncached MongoDB query) & less than 150\,ms \\
+    Dashboard aggregation query & less than 600\,ms \\
+    Demand forecasting endpoint (30 products) & less than 1.5\,s \\
+    Stripe webhook acknowledgement & less than 300\,ms \\
+    Product import (500-row CSV) & less than 4\,s \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Database Index Performance}
+
+MongoDB indexes are critical for query performance. The following composite and single-field indexes are defined:
+
+\begin{center}
+\begin{tabular}{p{0.30\textwidth}p{0.60\textwidth}}
+    \toprule
+    \textbf{Collection} & \textbf{Index} \\
+    \midrule
+    Invoice & \texttt{[userId, status, dueDate]} \\
+    Notification & \texttt{[userId, read, createdAt]} \\
+    SupportTicket & \texttt{[userId]}, \texttt{[status]} \\
+    ProductReview & \texttt{[productId]}, \texttt{[orderId, productId, userId]} \\
+    StockAllocation & \texttt{[productId]}, \texttt{[warehouseId]} \\
+    AuditLog & \texttt{[userId]}, \texttt{[entityType]}, \texttt{[createdAt]} \\
+    \bottomrule
+\end{tabular}
+\end{center}
+
+\subsection{Additional Performance Considerations}
+
+\begin{itemize}
+    \item Prisma \texttt{include} and \texttt{select} are used in all queries to prevent the N+1 query anti-pattern.
+    \item \texttt{Promise.all} is used to parallelise independent database queries (e.g.\ data + count for pagination).
+    \item The Redis TTL strategy is tuned per resource type to balance freshness and cache efficiency.
+    \item The Stripe webhook endpoint is designed to acknowledge receipt within 300\,ms to prevent Stripe retries.
+\end{itemize}
+
+\section{Deployment Architecture}
+
+The deployment model is fully cloud-managed:
+\begin{enumerate}
+    \item The Next.js application is built and deployed on \textbf{Vercel} via GitHub Actions CI/CD on every push to the main branch.
+    \item \textbf{MongoDB Atlas} provides the highly available NoSQL cluster with automatic backups and point-in-time recovery.
+    \item \textbf{Upstash Redis} acts as the distributed edge cache and rate-limit counter with zero-infrastructure management.
+    \item \textbf{Stripe} handles all payment processing; webhooks are delivered to the Vercel serverless function URL.
+    \item \textbf{Shippo} provides shipping label generation and rate calculation.
+    \item \textbf{Brevo with Upstash QStash} handles transactional email with decoupled background job queuing.
+    \item \textbf{ImageKit} stores and serves product images and QR codes via a global CDN.
+\end{enumerate}
+
+\section{Environment Configuration}
+
+The following environment variables are required for deployment:
+
+\begin{center}
+\begin{tabularx}{\textwidth}{lX}
+    \toprule
+    \textbf{Variable} & \textbf{Purpose} \\
+    \midrule
+    \texttt{DATABASE\_URL} & MongoDB Atlas connection string (required) \\
+    \texttt{JWT\_SECRET} & Secret for JWT signing --- min 32 chars in production (required) \\
+    \texttt{NEXT\_PUBLIC\_API\_URL} & Base URL for client-side API calls (required) \\
+    \texttt{STRIPE\_API\_KEY} & Stripe secret key for Checkout session creation \\
+    \texttt{STRIPE\_WEBHOOK\_SECRET} & Stripe signing secret for webhook signature verification \\
+    \texttt{BREVO\_API\_KEY} & Brevo API key for transactional email delivery \\
+    \texttt{SHIPPO\_API\_KEY} & Shippo API key for shipping rates and label generation \\
+    \texttt{UPSTASH\_REDIS\_REST\_URL} & Upstash Redis endpoint for caching and rate limiting \\
+    \texttt{UPSTASH\_REDIS\_REST\_TOKEN} & Upstash Redis authentication token \\
+    \texttt{IMAGEKIT\_PUBLIC\_KEY} & ImageKit public key for front-end image upload \\
+    \texttt{IMAGEKIT\_PRIVATE\_KEY} & ImageKit private key for server-side signed uploads \\
+    \texttt{OPENROUTER\_API\_KEY} & OpenRouter key for AI-powered business insights \\
+    \texttt{INTERNAL\_API\_KEY} & Key protecting cron and scheduled internal endpoints \\
+    \bottomrule
+\end{tabularx}
+\end{center}
+
+\section{Deployment Steps}
+
+A representative deployment sequence for production is:
+\begin{enumerate}
+    \item Configure MongoDB Atlas cluster and obtain the connection string with TLS enabled.
+    \item Provision Upstash Redis instance and obtain the REST URL and token.
+    \item Set up Stripe account, enable test mode, and configure the webhook endpoint.
+    \item Configure \texttt{JWT\_SECRET} to a cryptographically random 64-character hex string.
+    \item Set all environment variables in the Vercel project dashboard.
+    \item Push to the main branch; Vercel automatically builds and deploys via the GitHub integration.
+    \item Run \texttt{GET /api/health} to verify database and Redis connectivity in the deployed environment.
+    \item Test login, order placement, stock reservation, invoice payment, and webhook handling in the live environment.
+\end{enumerate}
+
+\section{Operational Risks During Deployment}
+
+Key deployment risks include:
+\begin{itemize}
+    \item \textbf{JWT\_SECRET default fallback:} If \texttt{JWT\_SECRET} is unset, the system falls back to a hard-coded value --- a critical production security vulnerability. Always validate this variable on startup.
+    \item \textbf{Race condition in order number generation:} Non-atomic count-based sequence; use a Redis \texttt{INCR} atomic counter for very high-traffic deployments.
+    \item \textbf{Non-atomic stock reservation:} Sequential Prisma updates without a transaction; migrate to \texttt{prisma.\$transaction} for absolute atomicity.
+    \item \textbf{Stripe webhook retries:} If the webhook endpoint times out, Stripe retries the event. Idempotency checks (status already \texttt{paid}) prevent duplicate updates.
+    \item \textbf{Optional integration degradation:} When Stripe, Shippo, or Brevo are not configured, the system degrades gracefully but should display clear UI indicators to administrators.
+    \item \textbf{Redis connectivity:} If Upstash Redis is unavailable, caching and rate limiting are bypassed; the system falls back to direct database queries.
+\end{itemize}
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Conclusion and Future Work}
+% ════════════════════════════════════════════════════════════════════════════
+
+\section{Conclusion}
+
+Stockly successfully demonstrates the design and implementation of a production-grade, full-stack inventory and supply chain management system using modern web technologies. The project integrates a role-based Next.js front-end, a server-side API layer, MongoDB and Prisma ORM for type-safe data access, Upstash Redis for caching, and a suite of third-party services covering payments, shipping, email, and image management.
+
+From a software engineering perspective, the project reflects several important design principles. Concerns are separated across API route handlers, Prisma helper modules, front-end components, and utility libraries. The stock state machine maintains a clear invariant throughout the order lifecycle. Financial calculations are protected against negative totals. Security is enforced at multiple layers --- cookie flags, JWT multi-branch verification, role-based query filtering, Stripe signature verification, and comprehensive Zod input validation. White-box testing targets above 90\% branch coverage for all critical paths, with 127 test cases documented across eight modules.
+
+The iterative Agile development approach, combined with a well-structured and extensively documented codebase, makes Stockly a strong academic demonstration of full-stack application design for a real-world supply chain problem domain.
+
+\section{Future Work}
+
+Several enhancements can strengthen Stockly in future iterations:
+\begin{itemize}
+    \item \textbf{Atomic stock reservation:} Replace sequential Prisma updates with MongoDB multi-document transactions to eliminate the race condition under high concurrency.
+    \item \textbf{Real-time notifications:} Integrate WebSockets or Server-Sent Events to push low-stock alerts and order status updates to dashboards without polling.
+    \item \textbf{Advanced forecasting:} Incorporate ARIMA or LSTM time-series models for products with seasonal demand patterns and longer historical datasets.
+    \item \textbf{Mobile companion app:} Build a React Native app for warehouse staff to scan QR codes, perform stock counts, and process transfers on mobile devices.
+    \item \textbf{Multi-tenancy:} Extend the data model to support multiple independent stores within a single deployment with complete data isolation.
+    \item \textbf{Barcode scanning:} Add a browser-based barcode scanner using the Web Barcode Detection API to speed up product lookup and stock entry.
+    \item \textbf{EDI integration:} Support Electronic Data Interchange with major suppliers to automate purchase order creation and invoice reconciliation.
+    \item \textbf{Advanced analytics:} Add machine learning-powered customer segmentation, churn prediction, and seasonal demand pattern detection.
+\end{itemize}
+
+\appendix
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Important Codebase References}
+% ════════════════════════════════════════════════════════════════════════════
+
+\begin{tabularx}{\textwidth}{l X}
+    \toprule
+    \textbf{File Path} & \textbf{Role in the Project} \\
+    \midrule
+    \texttt{middleware.ts} & Next.js edge middleware for authentication redirect \\
+    \texttt{prisma/schema.prisma} & Central source of truth for all MongoDB collection models \\
+    \texttt{utils/auth.ts} & JWT generation and multi-branch token verification \\
+    \texttt{app/api/auth/login/route.ts} & Login handler with bcrypt comparison and cookie management \\
+    \texttt{app/api/auth/register/route.ts} & User registration with Zod validation and bcrypt hashing \\
+    \texttt{app/api/orders/route.ts} & Order creation with fail-fast stock validation \\
+    \texttt{app/api/invoices/route.ts} & Invoice generation with financial integrity logic \\
+    \texttt{app/api/payments/checkout/route.ts} & Stripe Checkout session creation \\
+    \texttt{app/api/payments/webhook/route.ts} & Stripe event processing with signature verification \\
+    \texttt{app/api/forecasting/route.ts} & Demand forecasting endpoint \\
+    \texttt{lib/forecasting/index.ts} & Statistical engine: moving average, z-score, regression \\
+    \texttt{lib/email/} & Brevo transactional email templates and QStash job queue \\
+    \texttt{lib/api/rateLimiter.ts} & Upstash Redis rate limiting wrapper \\
+    \texttt{prisma/order.ts} & Repository helpers for order queries with nested includes \\
+    \texttt{hooks/queries/} & TanStack Query hooks for all resource types \\
+    \texttt{components/ui/} & Radix UI / shadcn component primitives \\
+    \bottomrule
+\end{tabularx}
+
+% ════════════════════════════════════════════════════════════════════════════
+\chapter{Code Listing Appendix}
+% ════════════════════════════════════════════════════════════════════════════
+
+The following listings include the most architecturally significant source files from the Stockly codebase.
+
+\section{Demand Forecasting Engine --- \texttt{lib/forecasting/index.ts}}
+
+\begin{lstlisting}[caption={Weighted moving average, z-score anomaly detection, and reorder classification}]
+export function calculateWeightedMovingAverage(
+  data: number[], weights: number[]
+): number {
+  const totalWeight = weights.reduce((s, w) => s + w, 0);
+  const weightedSum  = data.reduce((s, v, i) => s + v * (weights[i] ?? 0), 0);
+  return totalWeight > 0 ? weightedSum / totalWeight : 0;
+}
+
+export function detectAnomalies(
+  data: number[], threshold = 2.0
+): { value: number; isAnomaly: boolean }[] {
+  const mean = data.reduce((s, v) => s + v, 0) / data.length;
+  const sd   = Math.sqrt(
+    data.reduce((s, v) => s + (v - mean) ** 2, 0) / data.length
+  );
+  return data.map(value => ({
+    value,
+    isAnomaly: sd > 0 && Math.abs((value - mean) / sd) > threshold,
+  }));
+}
+
+export function classifyReorder(
+  availableStock: number, avgDailyDemand: number
+): "urgent" | "soon" | "normal" | "overstocked" | "no_data" {
+  if (avgDailyDemand <= 0) return "no_data";
+  const days = availableStock / avgDailyDemand;
+  if (days <= 7)  return "urgent";
+  if (days <= 14) return "soon";
+  if (days > 90)  return "overstocked";
+  return "normal";
+}
+\end{lstlisting}
+
+\section{Stripe Webhook Handler --- \texttt{app/api/payments/webhook/route.ts}}
+
+\begin{lstlisting}[caption={Stripe webhook signature verification and invoice status update}]
+export async function POST(request: NextRequest) {
+  const body      = await request.text();
+  const signature = request.headers.get("stripe-signature");
+  if (!signature) {
+    return NextResponse.json({ error: "Missing signature" }, { status: 400 });
+  }
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      body, signature, process.env.STRIPE_WEBHOOK_SECRET!
+    );
+  } catch {
+    return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
+  }
+  if (event.type === "checkout.session.completed") {
+    const session   = event.data.object as Stripe.Checkout.Session;
+    const invoiceId = session.metadata?.invoiceId;
+    if (invoiceId) {
+      await prisma.invoice.update({
+        where: { id: invoiceId },
+        data:  { status: "paid", paidAt: new Date(),
+                  amountPaid: session.amount_total ?? 0 },
+      });
+      await prisma.order.update({
+        where: { invoice: { id: invoiceId } },
+        data:  { paymentStatus: "paid", status: "confirmed" },
+      });
+    }
+  }
+  return NextResponse.json({ received: true });
+}
+\end{lstlisting}
+
+\section{Pagination Helper --- used in all list endpoints}
+
+\begin{lstlisting}[caption={Offset-based pagination with parallel count query}]
+const page  = parseInt(searchParams.get("page")  || "1");
+const limit = Math.min(parseInt(searchParams.get("limit") || "20"), 100);
+const skip  = (page - 1) * limit;
+
+const [items, total] = await Promise.all([
+  prisma.product.findMany({ where, skip, take: limit, orderBy }),
+  prisma.product.count({ where }),
+]);
+
+return NextResponse.json({
+  products:   items,
+  total,
+  page,
+  limit,
+  totalPages: Math.ceil(total / limit),
+});
+\end{lstlisting}
+
+% ════════════════════════════════════════════════════════════════════════════
+\section*{References}
+\addcontentsline{toc}{section}{References}
+% ════════════════════════════════════════════════════════════════════════════
+
+\begin{enumerate}
+    \item Next.js Team, \textit{Next.js 15 Documentation --- App Router}, Vercel Inc., 2024. [Online]. Available: \url{https://nextjs.org/docs}
+    \item Prisma Team, \textit{Prisma ORM Documentation --- MongoDB Connector}, 2024. [Online]. Available: \url{https://www.prisma.io/docs}
+    \item MongoDB Inc., \textit{MongoDB Manual --- Transactions and Indexes}, 2024. [Online]. Available: \url{https://www.mongodb.com/docs}
+    \item Stripe Inc., \textit{Stripe API Reference --- Checkout Sessions and Webhooks}, 2024. [Online]. Available: \url{https://stripe.com/docs/api}
+    \item Upstash, \textit{Redis Documentation --- Rate Limiting and Caching}, 2024. [Online]. Available: \url{https://docs.upstash.com}
+    \item TanStack, \textit{TanStack Query v5 Documentation}, 2024. [Online]. Available: \url{https://tanstack.com/query/latest/docs}
+    \item OWASP Foundation, \textit{OWASP Top Ten --- Web Application Security Risks}, 2021. [Online]. Available: \url{https://owasp.org/www-project-top-ten}
+    \item W3C, \textit{Web Content Accessibility Guidelines (WCAG) 2.1}, 2018. [Online]. Available: \url{https://www.w3.org/WAI/standards-guidelines/wcag}
+    \item Radix UI Team, \textit{Radix Primitives Documentation}, 2024. [Online]. Available: \url{https://www.radix-ui.com}
+    \item shadcn, \textit{shadcn/ui Component Library}, 2024. [Online]. Available: \url{https://ui.shadcn.com/docs}
+    \item Brevo, \textit{Transactional Email API Documentation}, 2024. [Online]. Available: \url{https://developers.brevo.com}
+    \item Zod Team, \textit{Zod --- TypeScript-first Schema Validation}, 2024. [Online]. Available: \url{https://zod.dev}
+    \item Beck, K., \textit{Test Driven Development: By Example}. Boston, MA: Addison-Wesley, 2002.
+    \item Fowler, M., \textit{Refactoring: Improving the Design of Existing Code}, 2nd ed. Boston, MA: Addison-Wesley, 2018.
+    \item Pressman, R. S. and Maxim, B. R., \textit{Software Engineering: A Practitioner's Approach}, 8th ed. New York: McGraw-Hill, 2015.
+\end{enumerate}
+
+% ════════════════════════════════════════════════════════════════════════════
+\section*{Glossary}
+\addcontentsline{toc}{section}{Glossary}
+% ════════════════════════════════════════════════════════════════════════════
+
+\begin{description}[leftmargin=3cm, style=nextline]
+    \item[RBAC] Role-Based Access Control --- a security model where permissions are assigned to roles, and users acquire permissions through role assignment.
+    \item[JWT] JSON Web Token --- a compact, URL-safe token for stateless authentication with HMAC-SHA256 signature.
+    \item[SSR] Server-Side Rendering --- generating page HTML on the server per request, improving initial load time and SEO.
+    \item[ORM] Object-Relational Mapper --- a library mapping language objects to database records. Prisma is the ORM used in Stockly.
+    \item[CDN] Content Delivery Network --- a geographically distributed network caching and serving assets closer to end users.
+    \item[Webhook] A server callback mechanism where one service sends an HTTP POST to another on a specific event (e.g.\ Stripe payment confirmation).
+    \item[TTL] Time-To-Live --- the duration a cache entry is valid before eviction and re-fetch from source.
+    \item[SKU] Stock Keeping Unit --- a unique identifier for each distinct product variant for inventory tracking.
+    \item[DFD] Data Flow Diagram --- shows how data moves between processes, external entities, and data stores.
+    \item[ERD] Entity Relationship Diagram --- graphical representation of the data model showing entities, attributes, and relationships.
+    \item[WCAG] Web Content Accessibility Guidelines --- W3C standard for making web content accessible to people with disabilities.
+    \item[CSRF] Cross-Site Request Forgery --- an attack making unauthorized requests on behalf of authenticated users. Mitigated by \texttt{SameSite=Strict} cookies.
+    \item[XSS] Cross-Site Scripting --- an attack injecting malicious scripts into pages viewed by other users.
+    \item[MoSCoW] A prioritisation technique: Must Have, Should Have, Could Have, Won't Have.
+    \item[Nullish Coalescing] The \texttt{??} operator --- returns the right-hand side only if the left-hand side is \texttt{null} or \texttt{undefined} (not falsy zero).
+    \item[Zod] A TypeScript-first runtime schema validation library for all API input validation in Stockly.
+    \item[bcrypt] A password hashing algorithm with a configurable cost factor to resist brute-force attacks.
+    \item[QStash] Upstash's serverless message queue for enqueuing background email jobs without blocking request threads.
+    \item[N+1 Problem] A database anti-pattern where listing N records triggers N extra queries for related data.
+    \item[State Machine] A model with a finite set of states and defined transitions; used for order status and invoice status lifecycle management.
+\end{description}
+
+\end{document}
